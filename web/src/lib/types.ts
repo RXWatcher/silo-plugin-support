@@ -14,7 +14,12 @@ export type SupportBootstrap = {
     | "admin-kb-list"
     | "admin-kb-edit"
     | "admin-kb-categories"
-    | "admin-kb-tags";
+    | "admin-kb-tags"
+    | "speedtest"
+    | "admin-st-endpoints"
+    | "admin-st-geoip"
+    | "admin-st-results"
+    | "admin-st-dashboards";
   theme: string;
   modules: ModuleToggles;
   userId: string;
@@ -96,4 +101,68 @@ export type KBViewAggregate = {
 export type KBEngagement = {
   votes: KBVoteAggregate;
   views: KBViewAggregate;
+};
+
+export type STEndpoint = {
+  id: number;
+  label: string;
+  url: string;
+  country: string;
+  region: string;
+  sortOrder: number;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type STGeoIPSourceKind = "mmdb_auto" | "mmdb_file" | "http_api" | "request_header";
+
+export type STGeoIPSource = {
+  id: number;
+  label: string;
+  kind: STGeoIPSourceKind;
+  config: Record<string, unknown>;
+  sortOrder: number;
+  active: boolean;
+  lastStatus: string;
+  lastUsedAt?: string | null;
+  lastRefreshedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type STResult = {
+  id: number;
+  customerId: string;
+  endpointId?: number | null;
+  endpointLabel: string;
+  autoStrategy: string;
+  downloadMbps: number;
+  uploadMbps: number;
+  pingMs: number;
+  jitterMs: number;
+  clientIp?: string;
+  userAgent?: string;
+  ranAt: string;
+};
+
+export type STAutoResolution = {
+  strategy: "latency" | "geoip" | "fallback";
+  endpoint?: STEndpoint | null;
+  candidates?: STEndpoint[];
+  geoip: { country?: string; sourceId?: number; sourceLabel?: string };
+};
+
+export type STDashboardAggregates = {
+  perEndpoint: Array<{
+    endpointId?: number | null;
+    label: string;
+    medianDownload: number;
+    medianUpload: number;
+    medianPing: number;
+    resultCount: number;
+  }>;
+  perDay: Array<{ day: string; count: number }>;
+  slowTop10: STResult[];
+  countryHits: Array<{ country: string; count: number }>;
 };
