@@ -13,6 +13,6 @@ import type { ModuleToggles } from "@/lib/types";
 export const SHIPPED_MODULES: ModuleToggles = {
   kb: true,
   speedtest: true,
-  tickets: false,
+  tickets: true,
   ai: false,
 };

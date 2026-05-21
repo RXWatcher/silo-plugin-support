@@ -9,7 +9,7 @@ Continuum deployment.
 |---|---|
 | Knowledge Base | Shipped (v0.2) |
 | Speedtest | Shipped (v0.3) |
-| Tickets | Coming soon |
+| Tickets | Shipped (v0.4) |
 | AI Assistance | Coming soon |
 
 See `docs/superpowers/specs/` for designs and `docs/superpowers/plans/`
@@ -31,31 +31,31 @@ skip cleanly.
 Requires `database_url` — a Postgres DSN, e.g.
 `postgres://plugin_support:...@host:5432/continuum?search_path=support&sslmode=disable`.
 
-The plugin manages its own schema; the operator only needs to create
-the schema and grant connect rights.
-
 Speedtest-related config keys (all optional, sane defaults):
 
 - `auto_strategy` — `latency` (default) or `geoip`
 - `client_ip_storage` — `truncated` (default) or `off`
 - `slow_threshold_mbps` — default `5`
-- `geoip_cache_dir` — default `/var/cache/continuum-plugin-support/geoip/`
+- `geoip_cache_dir` — default `$XDG_CACHE_HOME/continuum-plugin-support/geoip/`
+
+Tickets-related config keys:
+
+- `tickets_auto_close_enabled` — default `true`. Set to `false` to disable the auto-close cron entirely.
+- `tickets_resolved_close_after_days` — default `7`. Setting to `0` skips the resolved-pass while keeping the waiting-pass running.
+- `tickets_waiting_close_after_days` — default `14`. Setting to `0` skips the waiting-pass.
 
 ## Events emitted
 
 Routed via the existing `continuum.notifications` plugin per admin rules.
 
-**KB:**
-- `plugin.continuum.support.kb_article_published`
-- `plugin.continuum.support.kb_article_updated`
-- `plugin.continuum.support.kb_article_unhelpful`
+**KB:** `kb_article_published / _updated / _unhelpful`
+**Speedtest:** `speedtest_run / _slow`
+**Tickets:** `ticket_submitted / _replied / _status_changed / _assigned / _resolved / _reopened / _closed`
 
-**Speedtest:**
-- `plugin.continuum.support.speedtest_run`
-- `plugin.continuum.support.speedtest_slow`
+## Crons (admin-trigger endpoints)
 
-## Crons
+- KB: `POST /api/admin/kb/cron/run` (publish-due + unhelpful sweep)
+- Tickets: `POST /api/admin/tickets/cron/run` (auto-close idle)
+- GeoIP mmdb refresh: automatic on plugin start; manual via `POST /api/admin/speedtest/geoip/{id}/refresh`
 
-- **KB cron** (publish-due + unhelpful sweep): `POST /api/admin/kb/cron/run`
-- **GeoIP mmdb refresh** is automatic on plugin start (background);
-  manual trigger: `POST /api/admin/speedtest/geoip/{id}/refresh`
+Native `scheduled_task.v1` SDK wiring is a follow-up for all three.
