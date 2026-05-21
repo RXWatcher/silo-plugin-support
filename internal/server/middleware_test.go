@@ -70,9 +70,11 @@ func TestSecurityHeadersApplyOnEveryResponse(t *testing.T) {
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	for k, want := range map[string]string{
-		"X-Content-Type-Options": "nosniff",
-		"Referrer-Policy":        "no-referrer",
-		"X-Frame-Options":        "DENY",
+		"X-Content-Type-Options":  "nosniff",
+		"Referrer-Policy":         "no-referrer",
+		"X-Frame-Options":         "DENY",
+		"Permissions-Policy":      "camera=(), microphone=(), geolocation=()",
+		"Content-Security-Policy": "base-uri 'none'; frame-ancestors 'none'",
 	} {
 		if got := rec.Header().Get(k); got != want {
 			t.Errorf("%s = %q, want %q", k, got, want)

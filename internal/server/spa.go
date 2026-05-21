@@ -68,5 +68,5 @@ func adminTheme(r *http.Request) string {
 	if theme == "" {
 		theme = "default"
 	}
-	return html.EscapeString(theme)
+	return theme
 }

@@ -77,6 +77,9 @@ func currentModules(ctx context.Context, d Deps) pluginrt.ModuleToggles {
 	}
 	cfg, err := d.ConfigStore.GetConfig(ctx)
 	if err != nil {
+		if d.Logger != nil {
+			d.Logger.Warn("currentModules: GetConfig failed, returning defaults", "err", err)
+		}
 		return pluginrt.DefaultAppConfig().Modules
 	}
 	return cfg.Modules
