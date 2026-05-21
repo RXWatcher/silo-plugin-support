@@ -183,10 +183,22 @@ unique-indexed for prefix search.
 
 Daily cron runs in the shell's existing scheduled-task slot once a day
 (or, if no scheduled-task capability is declared yet, an explicit
-admin button "Close idle tickets" is the v1 fallback — verify SDK
-support pre-implement). Timings (`7d`, `14d`) are stored in the
-plugin config as `tickets.resolved_close_after_days` and
-`tickets.waiting_close_after_days`; defaults above.
+admin button "Close idle tickets" is the v1 fallback — same pattern
+the KB and Speedtest modules already use).
+
+Auto-close is **operator-configurable** via three plugin-config keys:
+
+| Key | Default | Effect |
+|---|---|---|
+| `tickets.auto_close_enabled` | `true` | When `false`, the cron is a no-op — tickets only close via explicit admin action. The admin-trigger endpoint still exists but exits without scanning. |
+| `tickets.resolved_close_after_days` | `7` | Idle days after `resolved_at` before auto-close. Ignored when `auto_close_enabled=false`. |
+| `tickets.waiting_close_after_days` | `14` | Idle days in `waiting_customer` before auto-close. Ignored when `auto_close_enabled=false`. |
+
+Setting either day threshold to `0` disables that specific close pass
+while leaving the other one running (e.g. `resolved_close_after_days=0`
+keeps resolved tickets open forever but still auto-closes long-waiting
+ones). Admins can also flip `auto_close_enabled` to `false` to turn
+the whole behaviour off without losing the configured thresholds.
 
 ## Routes (added to the support manifest at this module's release)
 
