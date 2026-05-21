@@ -50,7 +50,7 @@ func (s *Server) GetManifest(context.Context, *pluginv1.GetManifestRequest) (*pl
 // DefaultAppConfig returns the in-code defaults applied when no DB
 // row exists yet. Each module ship flips its own toggle to true.
 func DefaultAppConfig() Config {
-	return Config{Modules: ModuleToggles{}}
+	return Config{Modules: ModuleToggles{KB: true}}
 }
 
 // NormalizeAppConfig validates a Config and returns it. Validation
