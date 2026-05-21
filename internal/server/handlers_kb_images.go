@@ -15,11 +15,10 @@ import (
 const kbImageMaxBytes = 5 << 20 // 5 MB
 
 var kbAllowedImageMIMEs = map[string]bool{
-	"image/png":     true,
-	"image/jpeg":    true,
-	"image/gif":     true,
-	"image/webp":    true,
-	"image/svg+xml": true,
+	"image/png":  true,
+	"image/jpeg": true,
+	"image/gif":  true,
+	"image/webp": true,
 }
 
 // hKBAdminUploadImage accepts a multipart upload, validates size +
@@ -64,21 +63,8 @@ func hKBAdminUploadImage(d Deps) http.HandlerFunc {
 		}
 		if !kbAllowedImageMIMEs[mime] {
 			writeErr(w, http.StatusUnsupportedMediaType, "bad_mime",
-				"image must be PNG, JPEG, GIF, WEBP, or SVG")
+				"image must be PNG, JPEG, GIF, or WEBP")
 			return
-		}
-
-		// Server-side SVG safety: SVGs can carry <script>. v1 strips
-		// XML script tags by rejecting any SVG whose bytes contain
-		// `<script` (case-insensitive) or inline event handlers. A
-		// dedicated SVG sanitiser is a follow-up.
-		if mime == "image/svg+xml" {
-			lower := string(body)
-			if containsCI(lower, "<script") || containsCI(lower, "onerror=") || containsCI(lower, "onload=") {
-				writeErr(w, http.StatusUnsupportedMediaType, "unsafe_svg",
-					"SVG may not contain scripts or event handlers")
-				return
-			}
 		}
 
 		sum := sha256.Sum256(body)
@@ -135,45 +121,3 @@ func hKBImageServe(d Deps) http.HandlerFunc {
 	}
 }
 
-// containsCI does a case-insensitive substring check.
-func containsCI(haystack, needle string) bool {
-	if len(needle) > len(haystack) {
-		return false
-	}
-	hl := []byte(haystack)
-	nl := []byte(needle)
-	for i := 0; i < len(hl); i++ {
-		hl[i] = lcByte(hl[i])
-	}
-	for i := 0; i < len(nl); i++ {
-		nl[i] = lcByte(nl[i])
-	}
-	return bytesIndex(hl, nl) >= 0
-}
-
-func lcByte(b byte) byte {
-	if b >= 'A' && b <= 'Z' {
-		return b + 32
-	}
-	return b
-}
-
-func bytesIndex(s, sep []byte) int {
-	n := len(sep)
-	if n == 0 {
-		return 0
-	}
-	for i := 0; i+n <= len(s); i++ {
-		match := true
-		for j := 0; j < n; j++ {
-			if s[i+j] != sep[j] {
-				match = false
-				break
-			}
-		}
-		if match {
-			return i
-		}
-	}
-	return -1
-}
