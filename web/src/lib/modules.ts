@@ -12,7 +12,7 @@ import type { ModuleToggles } from "@/lib/types";
 //   !shipped            -> "coming soon" badge, regardless of enabled
 export const SHIPPED_MODULES: ModuleToggles = {
   kb: true,
-  speedtest: false,
+  speedtest: true,
   tickets: false,
   ai: false,
 };
