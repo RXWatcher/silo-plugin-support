@@ -1,0 +1,7 @@
+DROP TABLE IF EXISTS kb_views;
+DROP TABLE IF EXISTS kb_votes;
+DROP TABLE IF EXISTS kb_images;
+DROP TABLE IF EXISTS kb_article_tags;
+DROP TABLE IF EXISTS kb_articles;
+DROP TABLE IF EXISTS kb_tags;
+DROP TABLE IF EXISTS kb_categories;
