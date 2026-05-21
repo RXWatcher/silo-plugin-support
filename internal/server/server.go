@@ -36,6 +36,7 @@ type Deps struct {
 	STAutoResolver      *speedtest.Resolver
 	STClientIPStorage   string  // "truncated" (default) | "off"
 	STSlowThresholdMbps float64
+	STGeoIPCacheDir     string  // on-disk cache dir for mmdb_auto downloads
 }
 
 func New(d Deps) http.Handler {
