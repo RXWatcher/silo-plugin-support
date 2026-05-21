@@ -20,7 +20,14 @@ export function KBDetail() {
     let cancelled = false;
     setError("");
     getKBArticle(slug)
-      .then((a) => { if (!cancelled) setArticle(a); })
+      .then((a) => {
+        if (!cancelled) {
+          setArticle(a);
+          if (a.myVote === "up" || a.myVote === "down") {
+            setVote(a.myVote);
+          }
+        }
+      })
       .catch((err) => { if (!cancelled) setError(err instanceof Error ? err.message : "Not found"); });
     getKBRelated(slug)
       .then((r) => { if (!cancelled) setRelated(r); })

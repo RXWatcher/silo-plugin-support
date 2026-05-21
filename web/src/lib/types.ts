@@ -72,6 +72,7 @@ export type KBArticle = {
   lastEditedBy: string;
   createdAt: string;
   updatedAt: string;
+  myVote?: "up" | "down" | "";
   tags: KBTag[];
   category?: KBCategory;
 };

@@ -81,6 +81,11 @@ func hKBCustomerDetail(d Deps) http.HandlerFunc {
 		// Record view (best-effort — failure doesn't break the page).
 		_, _ = kbCustomerStore(d).KBRecordView(r.Context(), article.ID,
 			r.Header.Get("X-Continuum-User-Id"))
+		// Populate the calling customer's existing vote (best-effort).
+		if v, err := kbCustomerStore(d).KBGetVote(r.Context(), article.ID,
+			r.Header.Get("X-Continuum-User-Id")); err == nil {
+			article.MyVote = v
+		}
 		writeJSON(w, http.StatusOK, article)
 	}
 }

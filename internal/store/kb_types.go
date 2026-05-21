@@ -38,8 +38,13 @@ type KBArticle struct {
 	LastEditedBy  string      `json:"lastEditedBy"`
 	CreatedAt     time.Time   `json:"createdAt"`
 	UpdatedAt     time.Time   `json:"updatedAt"`
-	Tags          []KBTag     `json:"tags"`
-	Category      *KBCategory `json:"category,omitempty"`
+	// MyVote is the calling customer's existing vote ("up" | "down" | "")
+	// for this article, populated by the customer detail handler. Empty
+	// string means "no vote yet". Not stored in the row — derived per-
+	// request from kb_votes.
+	MyVote   string      `json:"myVote"`
+	Tags     []KBTag     `json:"tags"`
+	Category *KBCategory `json:"category,omitempty"`
 }
 
 // KBArticleSummary is the lightweight projection returned by list
