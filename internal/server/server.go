@@ -124,5 +124,44 @@ func New(d Deps) http.Handler {
 	r.Get   ("/api/admin/speedtest/results",            requireAdmin(hSTAdminListResults(d)))
 	r.Get   ("/api/admin/speedtest/dashboards",         requireAdmin(hSTAdminDashboards(d)))
 
+	// Tickets module routes.
+	r.Get ("/tickets",                            requireUser(hTKListPage(d)))
+	r.Get ("/tickets/{tracking_number}",          requireUser(hTKDetailPage(d)))
+	r.Get ("/api/customer/categories",            requireUser(hTKCategoriesForCustomer(d)))
+	r.Get ("/api/customer/tickets",               requireUser(hTKCustomerList(d)))
+	r.Post("/api/customer/tickets",               requireUser(hTKCustomerCreate(d)))
+	r.Get ("/api/customer/tickets/{tracking_number}",         requireUser(hTKCustomerDetail(d)))
+	r.Post("/api/customer/tickets/{tracking_number}/reply",   requireUser(hTKCustomerReply(d)))
+	r.Post("/api/customer/tickets/{tracking_number}/reopen",  requireUser(hTKCustomerReopen(d)))
+
+	r.Get ("/admin/tickets",                      requireAdmin(hTKAdminQueuePage(d)))
+	r.Get ("/admin/tickets/categories",           requireAdmin(hTKAdminCategoriesPage(d)))
+	r.Get ("/admin/tickets/{tracking_number}",    requireAdmin(hTKAdminDetailPage(d)))
+	r.Get ("/api/admin/tickets",                  requireAdmin(hTKAdminQueue(d)))
+	r.Get ("/api/admin/tickets/{tracking_number}",            requireAdmin(hTKAdminDetail(d)))
+	r.Post("/api/admin/tickets/{tracking_number}/reply",      requireAdmin(hTKAdminReply(d)))
+	r.Post("/api/admin/tickets/{tracking_number}/note",       requireAdmin(hTKAdminNote(d)))
+	r.Post("/api/admin/tickets/{tracking_number}/status",     requireAdmin(hTKAdminStatus(d)))
+	r.Post("/api/admin/tickets/{tracking_number}/assign",     requireAdmin(hTKAdminAssign(d)))
+	r.Post("/api/admin/tickets/cron/run",         requireAdmin(hTKAdminRunCron(d)))
+
+	r.Get   ("/api/admin/categories",             requireAdmin(hTKAdminListCategoriesAdmin(d)))
+	r.Post  ("/api/admin/categories",             requireAdmin(hTKAdminCreateCategory(d)))
+	r.Put   ("/api/admin/categories/{id}",        requireAdmin(hTKAdminUpdateCategory(d)))
+	r.Delete("/api/admin/categories/{id}",        requireAdmin(hTKAdminDeleteCategory(d)))
+
+	r.Get   ("/api/admin/subcategories",          requireAdmin(hTKAdminListSubcategories(d)))
+	r.Post  ("/api/admin/subcategories",          requireAdmin(hTKAdminCreateSubcategory(d)))
+	r.Put   ("/api/admin/subcategories/{id}",     requireAdmin(hTKAdminUpdateSubcategory(d)))
+	r.Delete("/api/admin/subcategories/{id}",     requireAdmin(hTKAdminDeleteSubcategory(d)))
+
+	r.Get   ("/api/admin/category-fields",        requireAdmin(hTKAdminListFields(d)))
+	r.Post  ("/api/admin/category-fields",        requireAdmin(hTKAdminCreateField(d)))
+	r.Put   ("/api/admin/category-fields/{id}",   requireAdmin(hTKAdminUpdateField(d)))
+	r.Delete("/api/admin/category-fields/{id}",   requireAdmin(hTKAdminDeleteField(d)))
+
+	r.Post  ("/api/tickets/entries/{entry_id}/attachments", requireUser(hTKUploadAttachment(d)))
+	r.Get   ("/api/attachments/{id}",             requireUser(hTKServeAttachment(d)))
+
 	return r
 }

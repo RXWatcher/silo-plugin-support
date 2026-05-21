@@ -1,6 +1,6 @@
 {
   "plugin_id": "continuum.support",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "checksum": "__CHECKSUM__",
   "continuum_api_version": "v1",
   "category": "Operations",
@@ -40,7 +40,24 @@
     { "id": "st_api_results",   "method": "*",    "path": "/api/customer/speedtest/results",     "access": "user" },
     { "id": "st_admin_pages",   "method": "GET",  "path": "/admin/speedtest/*",                  "access": "admin" },
     { "id": "st_admin_root",    "method": "GET",  "path": "/admin/speedtest",                    "access": "admin" },
-    { "id": "st_admin_api",     "method": "*",    "path": "/api/admin/speedtest/*",              "access": "admin" }
+    { "id": "st_admin_api",     "method": "*",    "path": "/api/admin/speedtest/*",              "access": "admin" },
+    { "id": "tk_list",          "method": "GET",  "path": "/tickets",                          "access": "user" },
+    { "id": "tk_detail",        "method": "GET",  "path": "/tickets/*",                        "access": "user" },
+    { "id": "tk_api_customer",  "method": "*",    "path": "/api/customer/tickets",             "access": "user" },
+    { "id": "tk_api_customer2", "method": "*",    "path": "/api/customer/tickets/*",           "access": "user" },
+    { "id": "tk_api_cats",      "method": "GET",  "path": "/api/customer/categories",          "access": "user" },
+    { "id": "tk_admin_root",    "method": "GET",  "path": "/admin/tickets",                    "access": "admin" },
+    { "id": "tk_admin_pages",   "method": "GET",  "path": "/admin/tickets/*",                  "access": "admin" },
+    { "id": "tk_admin_api",     "method": "*",    "path": "/api/admin/tickets",                "access": "admin" },
+    { "id": "tk_admin_api2",    "method": "*",    "path": "/api/admin/tickets/*",              "access": "admin" },
+    { "id": "tk_admin_cats",    "method": "*",    "path": "/api/admin/categories",             "access": "admin" },
+    { "id": "tk_admin_cats2",   "method": "*",    "path": "/api/admin/categories/*",           "access": "admin" },
+    { "id": "tk_admin_subs",    "method": "*",    "path": "/api/admin/subcategories",          "access": "admin" },
+    { "id": "tk_admin_subs2",   "method": "*",    "path": "/api/admin/subcategories/*",        "access": "admin" },
+    { "id": "tk_admin_fields",  "method": "*",    "path": "/api/admin/category-fields",        "access": "admin" },
+    { "id": "tk_admin_fields2", "method": "*",    "path": "/api/admin/category-fields/*",      "access": "admin" },
+    { "id": "tk_attach_upload", "method": "POST", "path": "/api/tickets/entries/*",            "access": "user" },
+    { "id": "tk_attach_serve",  "method": "GET",  "path": "/api/attachments/*",                "access": "user" }
   ],
   "global_config_schema": [
     {

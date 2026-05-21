@@ -24,6 +24,11 @@ type Config struct {
 	GeoIPCacheDir     string  `json:"geoip_cache_dir,omitempty"`
 	ClientIPStorage   string  `json:"client_ip_storage,omitempty"`
 	SlowThresholdMbps float64 `json:"slow_threshold_mbps,omitempty"`
+
+	// Tickets module config.
+	TicketsAutoCloseEnabled        bool `json:"tickets_auto_close_enabled"`
+	TicketsResolvedCloseAfterDays  int  `json:"tickets_resolved_close_after_days"`
+	TicketsWaitingCloseAfterDays   int  `json:"tickets_waiting_close_after_days"`
 }
 
 // ModuleToggles controls which modules are exposed in the UI. All
@@ -57,10 +62,14 @@ func (s *Server) GetManifest(context.Context, *pluginv1.GetManifestRequest) (*pl
 // row exists yet. Each module ship flips its own toggle to true.
 func DefaultAppConfig() Config {
 	return Config{
-		Modules:           ModuleToggles{KB: true, Speedtest: true},
+		Modules: ModuleToggles{KB: true, Speedtest: true, Tickets: true},
 		AutoStrategy:      "latency",
 		ClientIPStorage:   "truncated",
 		SlowThresholdMbps: 5,
+
+		TicketsAutoCloseEnabled:       true,
+		TicketsResolvedCloseAfterDays: 7,
+		TicketsWaitingCloseAfterDays:  14,
 	}
 }
 
@@ -80,6 +89,12 @@ func NormalizeAppConfig(cfg Config) (Config, error) {
 	}
 	if cfg.SlowThresholdMbps < 0 {
 		return Config{}, fmt.Errorf("slow_threshold_mbps must be >= 0")
+	}
+	if cfg.TicketsResolvedCloseAfterDays < 0 {
+		return Config{}, fmt.Errorf("tickets_resolved_close_after_days must be >= 0")
+	}
+	if cfg.TicketsWaitingCloseAfterDays < 0 {
+		return Config{}, fmt.Errorf("tickets_waiting_close_after_days must be >= 0")
 	}
 	return cfg, nil
 }

@@ -114,6 +114,9 @@ func main() {
 			STClientIPStorage:   cfg.ClientIPStorage,
 			STSlowThresholdMbps: cfg.SlowThresholdMbps,
 			STGeoIPCacheDir:     cfg.GeoIPCacheDir,
+			TKAutoCloseEnabled:       cfg.TicketsAutoCloseEnabled,
+			TKResolvedCloseAfterDays: cfg.TicketsResolvedCloseAfterDays,
+			TKWaitingCloseAfterDays:  cfg.TicketsWaitingCloseAfterDays,
 		}))
 		if old := poolPtr.Swap(pool); old != nil {
 			old.Close()
