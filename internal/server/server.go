@@ -37,6 +37,11 @@ type Deps struct {
 	STClientIPStorage   string  // "truncated" (default) | "off"
 	STSlowThresholdMbps float64
 	STGeoIPCacheDir     string  // on-disk cache dir for mmdb_auto downloads
+
+	// Tickets module config.
+	TKAutoCloseEnabled       bool
+	TKResolvedCloseAfterDays int
+	TKWaitingCloseAfterDays  int
 }
 
 func New(d Deps) http.Handler {
