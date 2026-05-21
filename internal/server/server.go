@@ -45,5 +45,44 @@ func New(d Deps) http.Handler {
 	r.Patch("/api/admin/config", requireAdmin(hPatchConfig(d)))
 	r.Get("/assets/*", hPublicAsset())
 
+	// KB module routes.
+	r.Get("/kb",                              requireUser(hKBBrowsePage(d)))
+	r.Get("/kb/{slug}",                       requireUser(hKBDetailPage(d)))
+	r.Get("/api/customer/kb/articles",        requireUser(hKBCustomerList(d)))
+	r.Get("/api/customer/kb/articles/{slug}", requireUser(hKBCustomerDetail(d)))
+	r.Get("/api/customer/kb/related/{slug}",  requireUser(hKBCustomerRelated(d)))
+	r.Get("/api/customer/kb/search",          requireUser(hKBCustomerSearch(d)))
+	r.Post("/api/customer/kb/articles/{slug}/vote", requireUser(hKBCustomerVote(d)))
+	r.Get("/api/kb/images/{id}",              requireUser(hKBImageServe(d)))
+
+	r.Get("/admin/kb",                requireAdmin(hKBAdminListPage(d)))
+	r.Get("/admin/kb/new",            requireAdmin(hKBAdminEditPage(d)))
+	r.Get("/admin/kb/{id}",           requireAdmin(hKBAdminEditPage(d)))
+	r.Get("/admin/kb/categories",     requireAdmin(hKBAdminCategoriesPage(d)))
+	r.Get("/admin/kb/tags",           requireAdmin(hKBAdminTagsPage(d)))
+
+	r.Get("/api/admin/kb/articles",                  requireAdmin(hKBAdminListArticles(d)))
+	r.Post("/api/admin/kb/articles",                 requireAdmin(hKBAdminCreateArticle(d)))
+	r.Get("/api/admin/kb/articles/{id}",             requireAdmin(hKBAdminGetArticle(d)))
+	r.Put("/api/admin/kb/articles/{id}",             requireAdmin(hKBAdminUpdateArticle(d)))
+	r.Delete("/api/admin/kb/articles/{id}",          requireAdmin(hKBAdminDeleteArticle(d)))
+	r.Post("/api/admin/kb/articles/{id}/publish",    requireAdmin(hKBAdminPublishArticle(d)))
+	r.Post("/api/admin/kb/articles/{id}/unpublish",  requireAdmin(hKBAdminUnpublishArticle(d)))
+	r.Get("/api/admin/kb/articles/{id}/engagement",  requireAdmin(hKBAdminEngagement(d)))
+
+	r.Get("/api/admin/kb/categories",      requireAdmin(hKBAdminListCategories(d)))
+	r.Post("/api/admin/kb/categories",     requireAdmin(hKBAdminCreateCategory(d)))
+	r.Put("/api/admin/kb/categories/{id}", requireAdmin(hKBAdminUpdateCategory(d)))
+	r.Delete("/api/admin/kb/categories/{id}", requireAdmin(hKBAdminDeleteCategory(d)))
+
+	r.Get("/api/admin/kb/tags",             requireAdmin(hKBAdminListTags(d)))
+	r.Post("/api/admin/kb/tags",            requireAdmin(hKBAdminCreateTag(d)))
+	r.Put("/api/admin/kb/tags/{id}",        requireAdmin(hKBAdminRenameTag(d)))
+	r.Delete("/api/admin/kb/tags/{id}",     requireAdmin(hKBAdminDeleteTag(d)))
+	r.Post("/api/admin/kb/tags/merge",      requireAdmin(hKBAdminMergeTags(d)))
+
+	r.Post("/api/admin/kb/images",          requireAdmin(hKBAdminUploadImage(d)))
+	r.Post("/api/admin/kb/cron/run",        requireAdmin(hKBAdminRunCron(d)))
+
 	return r
 }

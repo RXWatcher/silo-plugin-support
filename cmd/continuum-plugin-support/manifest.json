@@ -1,6 +1,6 @@
 {
   "plugin_id": "continuum.support",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "checksum": "__CHECKSUM__",
   "continuum_api_version": "v1",
   "category": "Operations",
@@ -22,7 +22,18 @@
     { "id": "admin_page", "method": "GET", "path": "/admin", "access": "admin",
       "navigable": true, "navigation_label": "Support", "navigation_kind": "admin" },
     { "id": "admin_get_config", "method": "GET", "path": "/api/admin/config", "access": "admin" },
-    { "id": "admin_patch_config", "method": "PATCH", "path": "/api/admin/config", "access": "admin" }
+    { "id": "admin_patch_config", "method": "PATCH", "path": "/api/admin/config", "access": "admin" },
+    { "id": "kb_browse", "method": "GET", "path": "/kb", "access": "user" },
+    { "id": "kb_detail", "method": "GET", "path": "/kb/*", "access": "user" },
+    { "id": "kb_api_list", "method": "GET", "path": "/api/customer/kb/articles", "access": "user" },
+    { "id": "kb_api_detail", "method": "GET", "path": "/api/customer/kb/articles/*", "access": "user" },
+    { "id": "kb_api_related", "method": "GET", "path": "/api/customer/kb/related/*", "access": "user" },
+    { "id": "kb_api_search", "method": "GET", "path": "/api/customer/kb/search", "access": "user" },
+    { "id": "kb_api_vote", "method": "POST", "path": "/api/customer/kb/articles/*", "access": "user" },
+    { "id": "kb_image_serve", "method": "GET", "path": "/api/kb/images/*", "access": "user" },
+    { "id": "kb_admin_list", "method": "GET", "path": "/admin/kb", "access": "admin" },
+    { "id": "kb_admin_edit", "method": "GET", "path": "/admin/kb/*", "access": "admin" },
+    { "id": "kb_admin_api", "method": "*", "path": "/api/admin/kb/*", "access": "admin" }
   ],
   "global_config_schema": [
     {
