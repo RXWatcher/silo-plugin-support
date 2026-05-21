@@ -8,3 +8,7 @@
 
 # Stray test binaries from `go test -c`.
 *.test
+
+# mmdb test fixture — db-ip free country-lite (~8 MB; too large to commit).
+# Set MMDB_FIXTURE=/path/to/file.mmdb or drop one at this path to run fixture tests.
+/internal/speedtest/geoip/testdata/sample.mmdb
