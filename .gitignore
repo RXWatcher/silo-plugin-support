@@ -5,3 +5,6 @@
 /web/vite.config.js
 /web/vite.config.d.ts
 /internal/server/public/dist
+
+# Stray test binaries from `go test -c`.
+*.test
