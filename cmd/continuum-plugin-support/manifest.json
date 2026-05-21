@@ -1,11 +1,14 @@
 {
   "plugin_id": "continuum.support",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "checksum": "__CHECKSUM__",
   "continuum_api_version": "v1",
   "category": "Operations",
   "supported_platforms": [
-    { "os": "linux", "arch": "amd64" }
+    {
+      "os": "linux",
+      "arch": "amd64"
+    }
   ],
   "capabilities": [
     {
@@ -16,48 +19,252 @@
     }
   ],
   "http_routes": [
-    { "id": "customer_home", "method": "GET", "path": "/", "access": "user",
-      "navigable": true, "navigation_label": "Support", "navigation_kind": "user" },
-    { "id": "customer_bootstrap", "method": "GET", "path": "/api/customer/bootstrap", "access": "user" },
-    { "id": "admin_page", "method": "GET", "path": "/admin", "access": "admin",
-      "navigable": true, "navigation_label": "Support", "navigation_kind": "admin" },
-    { "id": "admin_get_config", "method": "GET", "path": "/api/admin/config", "access": "admin" },
-    { "id": "admin_patch_config", "method": "PATCH", "path": "/api/admin/config", "access": "admin" },
-    { "id": "kb_browse", "method": "GET", "path": "/kb", "access": "user" },
-    { "id": "kb_detail", "method": "GET", "path": "/kb/*", "access": "user" },
-    { "id": "kb_api_list", "method": "GET", "path": "/api/customer/kb/articles", "access": "user" },
-    { "id": "kb_api_detail", "method": "GET", "path": "/api/customer/kb/articles/*", "access": "user" },
-    { "id": "kb_api_related", "method": "GET", "path": "/api/customer/kb/related/*", "access": "user" },
-    { "id": "kb_api_search", "method": "GET", "path": "/api/customer/kb/search", "access": "user" },
-    { "id": "kb_api_vote", "method": "POST", "path": "/api/customer/kb/articles/*", "access": "user" },
-    { "id": "kb_image_serve", "method": "GET", "path": "/api/kb/images/*", "access": "user" },
-    { "id": "kb_admin_list", "method": "GET", "path": "/admin/kb", "access": "admin" },
-    { "id": "kb_admin_edit", "method": "GET", "path": "/admin/kb/*", "access": "admin" },
-    { "id": "kb_admin_api", "method": "*", "path": "/api/admin/kb/*", "access": "admin" },
-    { "id": "st_browse",        "method": "GET",  "path": "/speedtest",                          "access": "user" },
-    { "id": "st_api_endpoints", "method": "GET",  "path": "/api/customer/speedtest/endpoints",   "access": "user" },
-    { "id": "st_api_auto",      "method": "GET",  "path": "/api/customer/speedtest/auto",        "access": "user" },
-    { "id": "st_api_results",   "method": "*",    "path": "/api/customer/speedtest/results",     "access": "user" },
-    { "id": "st_admin_pages",   "method": "GET",  "path": "/admin/speedtest/*",                  "access": "admin" },
-    { "id": "st_admin_root",    "method": "GET",  "path": "/admin/speedtest",                    "access": "admin" },
-    { "id": "st_admin_api",     "method": "*",    "path": "/api/admin/speedtest/*",              "access": "admin" },
-    { "id": "tk_list",          "method": "GET",  "path": "/tickets",                          "access": "user" },
-    { "id": "tk_detail",        "method": "GET",  "path": "/tickets/*",                        "access": "user" },
-    { "id": "tk_api_customer",  "method": "*",    "path": "/api/customer/tickets",             "access": "user" },
-    { "id": "tk_api_customer2", "method": "*",    "path": "/api/customer/tickets/*",           "access": "user" },
-    { "id": "tk_api_cats",      "method": "GET",  "path": "/api/customer/categories",          "access": "user" },
-    { "id": "tk_admin_root",    "method": "GET",  "path": "/admin/tickets",                    "access": "admin" },
-    { "id": "tk_admin_pages",   "method": "GET",  "path": "/admin/tickets/*",                  "access": "admin" },
-    { "id": "tk_admin_api",     "method": "*",    "path": "/api/admin/tickets",                "access": "admin" },
-    { "id": "tk_admin_api2",    "method": "*",    "path": "/api/admin/tickets/*",              "access": "admin" },
-    { "id": "tk_admin_cats",    "method": "*",    "path": "/api/admin/categories",             "access": "admin" },
-    { "id": "tk_admin_cats2",   "method": "*",    "path": "/api/admin/categories/*",           "access": "admin" },
-    { "id": "tk_admin_subs",    "method": "*",    "path": "/api/admin/subcategories",          "access": "admin" },
-    { "id": "tk_admin_subs2",   "method": "*",    "path": "/api/admin/subcategories/*",        "access": "admin" },
-    { "id": "tk_admin_fields",  "method": "*",    "path": "/api/admin/category-fields",        "access": "admin" },
-    { "id": "tk_admin_fields2", "method": "*",    "path": "/api/admin/category-fields/*",      "access": "admin" },
-    { "id": "tk_attach_upload", "method": "POST", "path": "/api/tickets/entries/*",            "access": "user" },
-    { "id": "tk_attach_serve",  "method": "GET",  "path": "/api/attachments/*",                "access": "user" }
+    {
+      "id": "customer_home",
+      "method": "GET",
+      "path": "/",
+      "access": "user",
+      "navigable": true,
+      "navigation_label": "Support",
+      "navigation_kind": "user"
+    },
+    {
+      "id": "customer_bootstrap",
+      "method": "GET",
+      "path": "/api/customer/bootstrap",
+      "access": "user"
+    },
+    {
+      "id": "admin_page",
+      "method": "GET",
+      "path": "/admin",
+      "access": "admin",
+      "navigable": true,
+      "navigation_label": "Support",
+      "navigation_kind": "admin"
+    },
+    {
+      "id": "admin_get_config",
+      "method": "GET",
+      "path": "/api/admin/config",
+      "access": "admin"
+    },
+    {
+      "id": "admin_patch_config",
+      "method": "PATCH",
+      "path": "/api/admin/config",
+      "access": "admin"
+    },
+    {
+      "id": "kb_browse",
+      "method": "GET",
+      "path": "/kb",
+      "access": "user"
+    },
+    {
+      "id": "kb_detail",
+      "method": "GET",
+      "path": "/kb/*",
+      "access": "user"
+    },
+    {
+      "id": "kb_api_list",
+      "method": "GET",
+      "path": "/api/customer/kb/articles",
+      "access": "user"
+    },
+    {
+      "id": "kb_api_detail",
+      "method": "GET",
+      "path": "/api/customer/kb/articles/*",
+      "access": "user"
+    },
+    {
+      "id": "kb_api_related",
+      "method": "GET",
+      "path": "/api/customer/kb/related/*",
+      "access": "user"
+    },
+    {
+      "id": "kb_api_search",
+      "method": "GET",
+      "path": "/api/customer/kb/search",
+      "access": "user"
+    },
+    {
+      "id": "kb_api_vote",
+      "method": "POST",
+      "path": "/api/customer/kb/articles/*",
+      "access": "user"
+    },
+    {
+      "id": "kb_image_serve",
+      "method": "GET",
+      "path": "/api/kb/images/*",
+      "access": "user"
+    },
+    {
+      "id": "kb_admin_list",
+      "method": "GET",
+      "path": "/admin/kb",
+      "access": "admin"
+    },
+    {
+      "id": "kb_admin_edit",
+      "method": "GET",
+      "path": "/admin/kb/*",
+      "access": "admin"
+    },
+    {
+      "id": "kb_admin_api",
+      "method": "*",
+      "path": "/api/admin/kb/*",
+      "access": "admin"
+    },
+    {
+      "id": "st_browse",
+      "method": "GET",
+      "path": "/speedtest",
+      "access": "user"
+    },
+    {
+      "id": "st_api_endpoints",
+      "method": "GET",
+      "path": "/api/customer/speedtest/endpoints",
+      "access": "user"
+    },
+    {
+      "id": "st_api_auto",
+      "method": "GET",
+      "path": "/api/customer/speedtest/auto",
+      "access": "user"
+    },
+    {
+      "id": "st_api_results",
+      "method": "*",
+      "path": "/api/customer/speedtest/results",
+      "access": "user"
+    },
+    {
+      "id": "st_admin_pages",
+      "method": "GET",
+      "path": "/admin/speedtest/*",
+      "access": "admin"
+    },
+    {
+      "id": "st_admin_root",
+      "method": "GET",
+      "path": "/admin/speedtest",
+      "access": "admin"
+    },
+    {
+      "id": "st_admin_api",
+      "method": "*",
+      "path": "/api/admin/speedtest/*",
+      "access": "admin"
+    },
+    {
+      "id": "tk_list",
+      "method": "GET",
+      "path": "/tickets",
+      "access": "user"
+    },
+    {
+      "id": "tk_detail",
+      "method": "GET",
+      "path": "/tickets/*",
+      "access": "user"
+    },
+    {
+      "id": "tk_api_customer",
+      "method": "*",
+      "path": "/api/customer/tickets",
+      "access": "user"
+    },
+    {
+      "id": "tk_api_customer2",
+      "method": "*",
+      "path": "/api/customer/tickets/*",
+      "access": "user"
+    },
+    {
+      "id": "tk_api_cats",
+      "method": "GET",
+      "path": "/api/customer/categories",
+      "access": "user"
+    },
+    {
+      "id": "tk_admin_root",
+      "method": "GET",
+      "path": "/admin/tickets",
+      "access": "admin"
+    },
+    {
+      "id": "tk_admin_pages",
+      "method": "GET",
+      "path": "/admin/tickets/*",
+      "access": "admin"
+    },
+    {
+      "id": "tk_admin_api",
+      "method": "*",
+      "path": "/api/admin/tickets",
+      "access": "admin"
+    },
+    {
+      "id": "tk_admin_api2",
+      "method": "*",
+      "path": "/api/admin/tickets/*",
+      "access": "admin"
+    },
+    {
+      "id": "tk_admin_cats",
+      "method": "*",
+      "path": "/api/admin/categories",
+      "access": "admin"
+    },
+    {
+      "id": "tk_admin_cats2",
+      "method": "*",
+      "path": "/api/admin/categories/*",
+      "access": "admin"
+    },
+    {
+      "id": "tk_admin_subs",
+      "method": "*",
+      "path": "/api/admin/subcategories",
+      "access": "admin"
+    },
+    {
+      "id": "tk_admin_subs2",
+      "method": "*",
+      "path": "/api/admin/subcategories/*",
+      "access": "admin"
+    },
+    {
+      "id": "tk_admin_fields",
+      "method": "*",
+      "path": "/api/admin/category-fields",
+      "access": "admin"
+    },
+    {
+      "id": "tk_admin_fields2",
+      "method": "*",
+      "path": "/api/admin/category-fields/*",
+      "access": "admin"
+    },
+    {
+      "id": "tk_attach_upload",
+      "method": "POST",
+      "path": "/api/tickets/entries/*",
+      "access": "user"
+    },
+    {
+      "id": "tk_attach_serve",
+      "method": "GET",
+      "path": "/api/attachments/*",
+      "access": "user"
+    }
   ],
   "global_config_schema": [
     {
@@ -68,8 +275,13 @@
       "required": true,
       "admin_form": {
         "fields": [
-          { "key": "value", "label": "Connection URL", "control": "ADMIN_FORM_CONTROL_PASSWORD",
-            "required": true, "secret": true }
+          {
+            "key": "value",
+            "label": "Connection URL",
+            "control": "ADMIN_FORM_CONTROL_PASSWORD",
+            "required": true,
+            "secret": true
+          }
         ]
       }
     }
