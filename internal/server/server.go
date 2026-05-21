@@ -19,10 +19,17 @@ type ConfigStore interface {
 	UpdateConfig(ctx context.Context, cfg pluginrt.Config) error
 }
 
+// EventPublisher publishes plugin lifecycle events to the host bus.
+// Tests pass nil (no-op); production wires the SDK's host client.
+type EventPublisher interface {
+	PublishEvent(ctx context.Context, name string, payload map[string]any) error
+}
+
 type Deps struct {
-	DatabaseURL string
-	Logger      hclog.Logger
-	ConfigStore ConfigStore
+	DatabaseURL    string
+	Logger         hclog.Logger
+	ConfigStore    ConfigStore
+	EventPublisher EventPublisher
 }
 
 func New(d Deps) http.Handler {

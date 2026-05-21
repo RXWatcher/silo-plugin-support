@@ -61,9 +61,10 @@ func main() {
 			return fmt.Errorf("bootstrap config: %w", err)
 		}
 		httpSrv.SetHandler(server.New(server.Deps{
-			DatabaseURL: cfg.DatabaseURL,
-			Logger:      logger,
-			ConfigStore: st,
+			DatabaseURL:    cfg.DatabaseURL,
+			Logger:         logger,
+			ConfigStore:    st,
+			EventPublisher: hostEventPublisher{},
 		}))
 		if old := poolPtr.Swap(pool); old != nil {
 			old.Close()
@@ -81,6 +82,20 @@ func main() {
 			HttpRoutes: httpSrv,
 		},
 	})
+}
+
+// hostEventPublisher is an EventPublisher that delegates to the SDK's
+// runtime-host client. sdkruntime.Host() is resolved lazily on each call so
+// that events published after BindHostBroker still reach the host even if the
+// client was not yet dialled when applyConfig ran.
+type hostEventPublisher struct{}
+
+func (hostEventPublisher) PublishEvent(ctx context.Context, name string, payload map[string]any) error {
+	h := sdkruntime.Host()
+	if h == nil {
+		return nil // broker not yet bound; skip silently
+	}
+	return h.PublishEvent(ctx, name, payload)
 }
 
 func loadManifest() (*pluginv1.PluginManifest, error) {
