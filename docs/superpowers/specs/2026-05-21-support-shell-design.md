@@ -284,11 +284,28 @@ client-side router (matches public-catalog's deliberate avoidance).
   "coming soon" placeholder so operators see what's coming.
 - Same pattern for Speedtest / Tickets / AI.
 
-Internal section switching is handled by React state in
-`<AdminLayout>`; the URL stays at `/admin` so there are no extra
-manifest routes to declare. The browser back/forward buttons don't
-cross sections — that's a deliberate trade for the no-client-router
-constraint and keeps deep-linking to a section out of scope for v1.
+**Section state in the URL** — `<AdminLayout>` mirrors the active
+section into a `?section=` query param so sidebar selections are
+deep-linkable and bookmarkable. No client-side router is added — this
+is one `URLSearchParams` read on mount and a `history.pushState` on
+each section change, scoped to this one param. Browser back/forward
+navigate between sections naturally.
+
+```
+/admin                       → Overview (default)
+/admin?section=config        → Configuration
+/admin?section=kb            → KB module admin entry (placeholder until module ships)
+```
+
+Unknown / missing `section` values fall back to Overview. The URL
+stays at `/admin` otherwise — no extra manifest routes to declare.
+
+The per-module sidebar entries behave the same way pre- and
+post-ship: pre-ship, clicking the sidebar entry switches the
+in-page section to a placeholder ("Knowledge Base is not yet
+shipped"); post-ship, the entry becomes an `<a href>` to that
+module's own admin route (e.g. `./kb`) declared in the module's
+manifest release.
 
 ## Bootstrap Payload
 
@@ -335,8 +352,11 @@ SPA (vitest):
 - ModuleCard renders enabled vs disabled variants.
 - ModuleStatusCard renders not-shipped vs disabled vs enabled variants.
 - ModuleTogglesPanel: switch click → onSave called with patch.
-- AdminLayout: sidebar entry click switches the rendered section;
-  per-module entries are clickable when enabled, placeholders when not.
+- AdminLayout: sidebar entry click switches the rendered section
+  and updates the URL `?section=`; mounting with a `?section=` value
+  selects that section on first paint; unknown values fall back to
+  Overview; per-module entries are clickable when enabled, placeholders
+  when not.
 
 ## Out Of Scope
 
