@@ -19,7 +19,13 @@ export type SupportBootstrap = {
     | "admin-st-endpoints"
     | "admin-st-geoip"
     | "admin-st-results"
-    | "admin-st-dashboards";
+    | "admin-st-dashboards"
+    | "tickets-list"
+    | "tickets-new"
+    | "tickets-detail"
+    | "admin-tickets-queue"
+    | "admin-tickets-detail"
+    | "admin-tickets-categories";
   theme: string;
   modules: ModuleToggles;
   userId: string;
@@ -165,4 +171,91 @@ export type STDashboardAggregates = {
   perDay: Array<{ day: string; count: number }>;
   slowTop10: STResult[];
   countryHits: Array<{ country: string; count: number }>;
+};
+
+export type TKCategory = {
+  id: number;
+  slug: string;
+  name: string;
+  sortOrder: number;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type TKSubcategory = {
+  id: number;
+  categoryId: number;
+  slug: string;
+  name: string;
+  sortOrder: number;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type TKCategoryField = {
+  id: number;
+  categoryId: number;
+  key: string;
+  label: string;
+  kind: "text" | "textarea" | "number" | "url";
+  required: boolean;
+  sortOrder: number;
+};
+
+export type TKAttachmentMeta = {
+  id: number;
+  filename: string;
+  mime: string;
+  bytes: number;
+  createdAt: string;
+};
+
+export type TKEntry = {
+  id: number;
+  ticketId: number;
+  kind: "initial" | "reply" | "internal_note" | "status_change" | "system";
+  authorId: string;
+  authorRole: "customer" | "admin" | "system";
+  body: string;
+  createdAt: string;
+  attachments?: TKAttachmentMeta[];
+};
+
+export type TKFieldValue = {
+  fieldId: number;
+  fieldKey: string;
+  fieldLabel: string;
+  value: string;
+};
+
+export type TKTicket = {
+  id: number;
+  trackingNumber: string;
+  customerId: string;
+  customerEmail: string;
+  categoryId: number;
+  subcategoryId?: number | null;
+  subject: string;
+  status: "open" | "in_progress" | "waiting_customer" | "resolved" | "closed";
+  assignedAdminId?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  waitingSince?: string | null;
+  resolvedAt?: string | null;
+  category?: TKCategory;
+  subcategory?: TKSubcategory;
+  fieldValues?: TKFieldValue[];
+};
+
+export type TKCategoriesResponse = {
+  categories: TKCategory[];
+  subcategories: Record<number, TKSubcategory[]>;
+  fields: Record<number, TKCategoryField[]>;
+};
+
+export type TKDetailResponse = {
+  ticket: TKTicket;
+  entries: TKEntry[];
 };
