@@ -17,10 +17,11 @@ type MMDBFileConfig struct {
 
 // MMDBFileSource implements Source for `kind = 'mmdb_file'`.
 type MMDBFileSource struct {
-	id     int64
-	cfg    MMDBFileConfig
-	reader *mmdbReader
-	once   sync.Once
+	id      int64
+	cfg     MMDBFileConfig
+	reader  *mmdbReader
+	once    sync.Once
+	openErr error
 }
 
 func NewMMDBFileSource(id int64, rawCfg json.RawMessage) (*MMDBFileSource, error) {
@@ -41,6 +42,9 @@ func (m *MMDBFileSource) Resolve(ctx context.Context, ip string, _ *http.Request
 	if _, err := os.Stat(m.cfg.Path); err != nil {
 		return "", err
 	}
-	m.once.Do(func() { _ = m.reader.Open(m.cfg.Path) })
+	m.once.Do(func() { m.openErr = m.reader.Open(m.cfg.Path) })
+	if m.openErr != nil {
+		return "", m.openErr
+	}
 	return m.reader.Country(ctx, ip)
 }
