@@ -29,6 +29,7 @@ func New(d Deps) http.Handler {
 	r := chi.NewRouter()
 	r.Use(middleware.Recoverer)
 	r.Use(securityHeaders)
+	r.Use(limitBody(12 << 20))
 
 	r.Get("/", requireUser(hCustomerHome(d)))
 	r.Get("/api/customer/bootstrap", requireUser(hCustomerBootstrap(d)))

@@ -37,3 +37,15 @@ func requireAdmin(next http.HandlerFunc) http.HandlerFunc {
 		next(w, r)
 	}
 }
+
+// limitBody caps inbound request bodies. The wrapped handler sees a
+// MaxBytesReader; reading past max returns an error which http
+// surfaces as a 413 if the handler writes nothing else first.
+func limitBody(max int64) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			r.Body = http.MaxBytesReader(w, r.Body, max)
+			next.ServeHTTP(w, r)
+		})
+	}
+}
