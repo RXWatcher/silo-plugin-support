@@ -1,4 +1,5 @@
 import { ModuleStatusCard } from "./ModuleStatusCard";
+import { SHIPPED_MODULES } from "@/lib/modules";
 import type { ModuleToggles } from "@/lib/types";
 
 const ENTRIES: Array<{ title: string; key: keyof ModuleToggles; href: string }> = [
@@ -25,7 +26,7 @@ export function AdminOverview({ modules }: { modules: ModuleToggles }) {
             <ModuleStatusCard
               key={e.key}
               title={e.title}
-              shipped={false}
+              shipped={SHIPPED_MODULES[e.key]}
               enabled={modules[e.key]}
               manageHref={e.href}
             />

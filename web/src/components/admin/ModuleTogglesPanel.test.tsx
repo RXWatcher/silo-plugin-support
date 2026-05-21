@@ -1,8 +1,10 @@
-import { describe, expect, it } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { ModuleTogglesPanel } from "./ModuleTogglesPanel";
 
 describe("ModuleTogglesPanel", () => {
+  afterEach(() => cleanup());
+
   it("renders one row per module with the current state", () => {
     render(<ModuleTogglesPanel
       modules={{ kb: true, speedtest: false, tickets: false, ai: false }}
@@ -12,14 +14,17 @@ describe("ModuleTogglesPanel", () => {
     expect(switches).toHaveLength(4);
   });
 
-  it("renders module labels and descriptions", () => {
+  it("calls onSave with a patch when a switch is toggled", () => {
+    const onSave = vi.fn(async () => {});
     render(<ModuleTogglesPanel
-      modules={{ kb: true, speedtest: false, tickets: false, ai: false }}
-      onSave={async () => {}}
+      modules={{ kb: false, speedtest: false, tickets: false, ai: false }}
+      onSave={onSave}
     />);
-    expect(screen.getAllByText(/operator-authored articles/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/multi-endpoint connection/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/typed support intake/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/suggest kb articles/i).length).toBeGreaterThan(0);
+    // The aria-label on each Switch is `Toggle <label>`. KB is first.
+    fireEvent.click(screen.getByRole("switch", { name: /toggle knowledge base/i }));
+    expect(onSave).toHaveBeenCalledTimes(1);
+    expect(onSave).toHaveBeenCalledWith({
+      modules: { kb: true, speedtest: false, tickets: false, ai: false },
+    });
   });
 });

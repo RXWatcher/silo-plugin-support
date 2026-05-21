@@ -1,5 +1,5 @@
 import { describe, expect, it, afterEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { AdminLayout } from "./AdminLayout";
 
 describe("AdminLayout", () => {
@@ -21,5 +21,23 @@ describe("AdminLayout", () => {
     history.pushState({}, "", "/admin?section=bogus");
     render(<AdminLayout modules={{ kb: false, speedtest: false, tickets: false, ai: false }} />);
     expect(screen.getByRole("heading", { level: 2, name: /overview/i })).toBeInTheDocument();
+  });
+
+  it("switches the rendered section and the ?section= URL when a sidebar entry is clicked", () => {
+    history.pushState({}, "", "/admin");
+    render(<AdminLayout modules={{ kb: false, speedtest: false, tickets: false, ai: false }} />);
+    // Starts on Overview.
+    expect(screen.getByRole("heading", { level: 2, name: /overview/i })).toBeInTheDocument();
+    expect(window.location.search).toBe("");
+
+    fireEvent.click(screen.getByRole("button", { name: /^configuration$/i }));
+
+    expect(screen.getByRole("heading", { level: 2, name: /configuration/i })).toBeInTheDocument();
+    expect(new URLSearchParams(window.location.search).get("section")).toBe("config");
+
+    // Clicking Overview clears the param again (overview is the default).
+    fireEvent.click(screen.getByRole("button", { name: /^overview$/i }));
+    expect(screen.getByRole("heading", { level: 2, name: /overview/i })).toBeInTheDocument();
+    expect(new URLSearchParams(window.location.search).get("section")).toBeNull();
   });
 });
