@@ -13,8 +13,12 @@ import (
 
 var policy = func() *bluemonday.Policy {
 	p := bluemonday.UGCPolicy()
-	// KB articles can embed plugin-served images.
-	p.AllowAttrs("src", "alt", "title", "width", "height").OnElements("img")
+	// UGCPolicy() already calls AllowImages() which permits img with
+	// `src` constrained to http/https schemes and `alt` allowed.
+	// Only declare the extra non-URL attrs we additionally want;
+	// re-declaring `src` here would APPEND a no-scheme-check policy
+	// (bluemonday's `OnElements` is additive), opening `data:` URIs.
+	p.AllowAttrs("title", "width", "height").OnElements("img")
 	// Tiptap may produce these classes for code blocks / inline code.
 	p.AllowAttrs("class").OnElements("code", "pre")
 	return p

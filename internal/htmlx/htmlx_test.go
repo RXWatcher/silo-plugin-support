@@ -41,3 +41,22 @@ func TestExtractTextOnEmptyInput(t *testing.T) {
 		t.Fatalf("ExtractText(\"\") = %q, want empty", got)
 	}
 }
+
+func TestSanitizeRejectsDataURIInImgSrc(t *testing.T) {
+	dirty := `<img src="data:text/html,<script>alert(1)</script>" alt="x">`
+	clean := Sanitize(dirty)
+	if strings.Contains(clean, "data:") {
+		t.Fatalf("data: URI survived sanitization: %q", clean)
+	}
+}
+
+func TestSanitizeKeepsHttpAndAbsolutePathImgSrc(t *testing.T) {
+	// Make sure the fix didn't over-restrict — the legitimate paths
+	// (/api/kb/images/N and https://...) must still pass.
+	for _, src := range []string{`/api/kb/images/3`, `https://example.com/x.png`} {
+		clean := Sanitize(`<img src="` + src + `" alt="x">`)
+		if !strings.Contains(clean, `src="`+src+`"`) {
+			t.Fatalf("safe src %q lost during sanitization: %q", src, clean)
+		}
+	}
+}
