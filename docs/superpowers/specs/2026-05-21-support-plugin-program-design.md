@@ -1,5 +1,43 @@
 # Support Plugin — Program Design
 
+## Status (as of 2026-05-21 ship)
+
+All four originally-planned modules in the v1 ship order are now
+shipped and live on `main`:
+
+| Module | Manifest version | Released |
+|---|---|---|
+| Shell | 0.1.0 | First commit; foundation for the rest |
+| Knowledge Base | 0.2.0 | After Speedtest in pre-execution order; shipped first per dependency on the shell |
+| Speedtest | 0.3.0 | Shipped after KB |
+| Tickets | 0.4.0 | Shipped after Speedtest |
+
+**AI Assistance** (program ship-order #5) was always positioned as a
+separate cycle. It has no spec or plan yet — fresh brainstorm when
+the operator is ready.
+
+**Deviations from this program-level design during execution:**
+
+- Each module's auto-trigger cron was deferred to an admin-button
+  endpoint instead of a native `scheduled_task.v1` SDK capability.
+  The capability does not yet exist in the SDK; admin-trigger is the
+  v1 fallback for all three crons (KB unhelpful sweep, tickets
+  auto-close, speedtest mmdb refresh). See `docs/follow-ups.md`.
+- Speedtest GeoIP grew from a hardcoded chain into an admin-
+  orderable list of sources with four kinds (`mmdb_auto`,
+  `mmdb_file`, `http_api`, `request_header`) at the user's request
+  during the brainstorm.
+- Tickets v1 scope is the minimum decided during the implementation
+  spec; the bigger feature list discussed early (linked tickets,
+  tags, custom fields, email-to-ticket, live chat, CSAT surveys) is
+  documented as explicitly out of scope.
+
+This status block is the only retrospective in the file; the
+sections below reflect the original program-level decomposition as
+written at planning time.
+
+---
+
 **Status:** Program-level spec. Per-module designs (Knowledge Base, Speedtest, Tickets, AI Assistance) follow as separate documents under this same `specs/` directory and are each their own brainstorm → spec → plan → implementation cycle.
 
 **Date:** 2026-05-21
