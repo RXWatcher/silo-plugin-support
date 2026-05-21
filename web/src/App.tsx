@@ -14,6 +14,12 @@ import { STAdminEndpoints } from "@/pages/admin/st/Endpoints";
 import { STAdminGeoIP } from "@/pages/admin/st/GeoIP";
 import { STAdminResults } from "@/pages/admin/st/Results";
 import { STAdminDashboards } from "@/pages/admin/st/Dashboards";
+import { TKList } from "@/pages/tk/List";
+import { TKNew } from "@/pages/tk/New";
+import { TKDetail } from "@/pages/tk/Detail";
+import { TKAdminQueue } from "@/pages/admin/tk/Queue";
+import { TKAdminDetail } from "@/pages/admin/tk/Detail";
+import { TKAdminCategories } from "@/pages/admin/tk/Categories";
 
 export function App() {
   const bootstrap = readBootstrap();
@@ -31,7 +37,13 @@ export function App() {
     case "admin-st-geoip":       page = <STAdminGeoIP />; break;
     case "admin-st-results":     page = <STAdminResults />; break;
     case "admin-st-dashboards":  page = <STAdminDashboards />; break;
-    default:                     page = <CustomerHome bootstrap={bootstrap} />;
+    case "tickets-list":             page = <TKList />; break;
+    case "tickets-new":              page = <TKNew />; break;
+    case "tickets-detail":           page = <TKDetail />; break;
+    case "admin-tickets-queue":      page = <TKAdminQueue />; break;
+    case "admin-tickets-detail":     page = <TKAdminDetail />; break;
+    case "admin-tickets-categories": page = <TKAdminCategories />; break;
+    default:                         page = <CustomerHome bootstrap={bootstrap} />;
   }
   return (
     <>
