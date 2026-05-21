@@ -1,6 +1,6 @@
 {
   "plugin_id": "continuum.support",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "checksum": "__CHECKSUM__",
   "continuum_api_version": "v1",
   "category": "Operations",
@@ -33,7 +33,14 @@
     { "id": "kb_image_serve", "method": "GET", "path": "/api/kb/images/*", "access": "user" },
     { "id": "kb_admin_list", "method": "GET", "path": "/admin/kb", "access": "admin" },
     { "id": "kb_admin_edit", "method": "GET", "path": "/admin/kb/*", "access": "admin" },
-    { "id": "kb_admin_api", "method": "*", "path": "/api/admin/kb/*", "access": "admin" }
+    { "id": "kb_admin_api", "method": "*", "path": "/api/admin/kb/*", "access": "admin" },
+    { "id": "st_browse",        "method": "GET",  "path": "/speedtest",                          "access": "user" },
+    { "id": "st_api_endpoints", "method": "GET",  "path": "/api/customer/speedtest/endpoints",   "access": "user" },
+    { "id": "st_api_auto",      "method": "GET",  "path": "/api/customer/speedtest/auto",        "access": "user" },
+    { "id": "st_api_results",   "method": "*",    "path": "/api/customer/speedtest/results",     "access": "user" },
+    { "id": "st_admin_pages",   "method": "GET",  "path": "/admin/speedtest/*",                  "access": "admin" },
+    { "id": "st_admin_root",    "method": "GET",  "path": "/admin/speedtest",                    "access": "admin" },
+    { "id": "st_admin_api",     "method": "*",    "path": "/api/admin/speedtest/*",              "access": "admin" }
   ],
   "global_config_schema": [
     {

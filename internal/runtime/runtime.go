@@ -18,6 +18,12 @@ import (
 type Config struct {
 	DatabaseURL string        `json:"-"`
 	Modules     ModuleToggles `json:"modules"`
+
+	// Speedtest module config.
+	AutoStrategy      string  `json:"auto_strategy,omitempty"`
+	GeoIPCacheDir     string  `json:"geoip_cache_dir,omitempty"`
+	ClientIPStorage   string  `json:"client_ip_storage,omitempty"`
+	SlowThresholdMbps float64 `json:"slow_threshold_mbps,omitempty"`
 }
 
 // ModuleToggles controls which modules are exposed in the UI. All
@@ -50,13 +56,31 @@ func (s *Server) GetManifest(context.Context, *pluginv1.GetManifestRequest) (*pl
 // DefaultAppConfig returns the in-code defaults applied when no DB
 // row exists yet. Each module ship flips its own toggle to true.
 func DefaultAppConfig() Config {
-	return Config{Modules: ModuleToggles{KB: true}}
+	return Config{
+		Modules:           ModuleToggles{KB: true, Speedtest: true},
+		AutoStrategy:      "latency",
+		ClientIPStorage:   "truncated",
+		SlowThresholdMbps: 5,
+	}
 }
 
-// NormalizeAppConfig validates a Config and returns it. Validation
-// is minimal at shell time — module-specific validation lives in
-// module specs.
+// NormalizeAppConfig validates a Config and returns it.
 func NormalizeAppConfig(cfg Config) (Config, error) {
+	if cfg.AutoStrategy == "" {
+		cfg.AutoStrategy = "latency"
+	}
+	if cfg.AutoStrategy != "latency" && cfg.AutoStrategy != "geoip" {
+		return Config{}, fmt.Errorf("auto_strategy must be 'latency' or 'geoip'")
+	}
+	if cfg.ClientIPStorage == "" {
+		cfg.ClientIPStorage = "truncated"
+	}
+	if cfg.ClientIPStorage != "truncated" && cfg.ClientIPStorage != "off" {
+		return Config{}, fmt.Errorf("client_ip_storage must be 'truncated' or 'off'")
+	}
+	if cfg.SlowThresholdMbps < 0 {
+		return Config{}, fmt.Errorf("slow_threshold_mbps must be >= 0")
+	}
 	return cfg, nil
 }
 

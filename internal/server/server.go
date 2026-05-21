@@ -91,5 +91,33 @@ func New(d Deps) http.Handler {
 	r.Post("/api/admin/kb/images",          requireAdmin(hKBAdminUploadImage(d)))
 	r.Post("/api/admin/kb/cron/run",        requireAdmin(hKBAdminRunCron(d)))
 
+	// Speedtest module routes.
+	r.Get("/speedtest",                       requireUser(hSTSpeedtestPage(d)))
+	r.Get("/api/customer/speedtest/endpoints",requireUser(hSTCustomerEndpoints(d)))
+	r.Get("/api/customer/speedtest/auto",     requireUser(hSTCustomerAuto(d)))
+	r.Post("/api/customer/speedtest/results", requireUser(hSTCustomerSaveResult(d)))
+	r.Get("/api/customer/speedtest/results",  requireUser(hSTCustomerHistory(d)))
+
+	r.Get("/admin/speedtest",            requireAdmin(hSTAdminEndpointsPage(d)))
+	r.Get("/admin/speedtest/geoip",      requireAdmin(hSTAdminGeoIPPage(d)))
+	r.Get("/admin/speedtest/results",    requireAdmin(hSTAdminResultsPage(d)))
+	r.Get("/admin/speedtest/dashboards", requireAdmin(hSTAdminDashboardsPage(d)))
+
+	r.Get   ("/api/admin/speedtest/endpoints",           requireAdmin(hSTAdminListEndpoints(d)))
+	r.Post  ("/api/admin/speedtest/endpoints",           requireAdmin(hSTAdminCreateEndpoint(d)))
+	r.Put   ("/api/admin/speedtest/endpoints/{id}",      requireAdmin(hSTAdminUpdateEndpoint(d)))
+	r.Delete("/api/admin/speedtest/endpoints/{id}",      requireAdmin(hSTAdminDeleteEndpoint(d)))
+	r.Post  ("/api/admin/speedtest/endpoints/{id}/ping", requireAdmin(hSTAdminPingEndpoint(d)))
+
+	r.Get   ("/api/admin/speedtest/geoip",              requireAdmin(hSTAdminListGeoIPSources(d)))
+	r.Post  ("/api/admin/speedtest/geoip",              requireAdmin(hSTAdminCreateGeoIPSource(d)))
+	r.Put   ("/api/admin/speedtest/geoip/{id}",         requireAdmin(hSTAdminUpdateGeoIPSource(d)))
+	r.Delete("/api/admin/speedtest/geoip/{id}",         requireAdmin(hSTAdminDeleteGeoIPSource(d)))
+	r.Post  ("/api/admin/speedtest/geoip/{id}/refresh", requireAdmin(hSTAdminRefreshGeoIPSource(d)))
+	r.Post  ("/api/admin/speedtest/geoip/{id}/test",    requireAdmin(hSTAdminTestGeoIPSource(d)))
+
+	r.Get   ("/api/admin/speedtest/results",            requireAdmin(hSTAdminListResults(d)))
+	r.Get   ("/api/admin/speedtest/dashboards",         requireAdmin(hSTAdminDashboards(d)))
+
 	return r
 }

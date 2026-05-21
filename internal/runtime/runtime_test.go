@@ -16,7 +16,7 @@ func TestConfigureRejectsMissingDatabaseURL(t *testing.T) {
 	}
 }
 
-func TestConfigureDefaultsKBOnOthersOff(t *testing.T) {
+func TestConfigureDefaultsKBAndSpeedtestOnOthersOff(t *testing.T) {
 	var observed Config
 	s := New(nil, func(cfg Config) error {
 		observed = cfg
@@ -25,10 +25,10 @@ func TestConfigureDefaultsKBOnOthersOff(t *testing.T) {
 	if _, err := s.Configure(context.Background(), configureRequest()); err != nil {
 		t.Fatalf("Configure: %v", err)
 	}
-	if !observed.Modules.KB {
-		t.Fatalf("KB should default ON now that the module ships; got %+v", observed.Modules)
+	if !observed.Modules.KB || !observed.Modules.Speedtest {
+		t.Fatalf("KB + Speedtest should default ON; got %+v", observed.Modules)
 	}
-	if observed.Modules.Speedtest || observed.Modules.Tickets || observed.Modules.AI {
+	if observed.Modules.Tickets || observed.Modules.AI {
 		t.Fatalf("non-shipped modules should still default off; got %+v", observed.Modules)
 	}
 	if observed.DatabaseURL != "postgres://x" {
