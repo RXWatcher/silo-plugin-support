@@ -29,6 +29,15 @@ func main() {
 	}
 
 	httpSrv := httproutes.NewServer()
+
+	// Phase A skeleton: the binary compiles and the SDK serve loop
+	// starts, but `Runtime` is intentionally omitted from
+	// CapabilityServers and `manifest` / `logger` aren't yet plumbed
+	// into the runtime or the server's Deps. The host's gRPC
+	// handshake will reject this binary until Phase E (task E2)
+	// wires `pluginrt.New(manifest, applyConfig)` here and adds
+	// `Runtime: rt` below — at which point the SDK is satisfied and
+	// `manifest` / `logger` flow into the runtime + server.Deps.
 	_ = manifest
 	_ = logger
 
