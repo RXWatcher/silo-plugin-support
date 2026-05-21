@@ -1525,6 +1525,100 @@ git commit -m "feat(main): wire applyConfig, migrate, store, server"
 
 ---
 
+### Task E2b: Body-size cap middleware (TDD)
+
+**Files:**
+- Modify: `internal/server/middleware.go` (add `limitBody`)
+- Modify: `internal/server/middleware_test.go` (add cap test)
+- Modify: `internal/server/server.go` (apply middleware after `securityHeaders`)
+
+Caps request bodies at 12 MB so a stray big upload can't OOM the
+plugin. 12 MB chosen as the v1 ceiling: shell has only tiny PATCH
+config; the tickets module (4th ship) sends 10 MB attachments +
+JSON envelope. Modules that need bigger can opt out per-route later.
+
+- [ ] **Step 1: Add failing test**
+
+Append to `internal/server/middleware_test.go`:
+
+```go
+func TestLimitBodyRejectsOversizedRequests(t *testing.T) {
+	inner := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, err := io.Copy(io.Discard, r.Body)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusRequestEntityTooLarge)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	})
+	h := limitBody(12<<20)(inner)
+	big := bytes.Repeat([]byte("x"), (12<<20)+1)
+	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader(big))
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	if rec.Code != http.StatusRequestEntityTooLarge {
+		t.Fatalf("status = %d, want 413", rec.Code)
+	}
+}
+```
+
+Add the imports (`bytes`, `io`) at the top of the file if not present.
+
+- [ ] **Step 2: Run, expect fail**
+
+```bash
+go test ./internal/server/...
+```
+
+Expected: `limitBody` undefined.
+
+- [ ] **Step 3: Implement `limitBody`**
+
+Append to `internal/server/middleware.go`:
+
+```go
+// limitBody caps inbound request bodies. The wrapped handler sees a
+// MaxBytesReader; reading past max returns an error which http
+// surfaces as a 413 if the handler writes nothing else first.
+func limitBody(max int64) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			r.Body = http.MaxBytesReader(w, r.Body, max)
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+```
+
+- [ ] **Step 4: Wire into router (in `internal/server/server.go`)**
+
+```go
+func New(d Deps) http.Handler {
+	r := chi.NewRouter()
+	r.Use(middleware.Recoverer)
+	r.Use(securityHeaders)
+	r.Use(limitBody(12 << 20))
+
+	r.Get("/", requireUser(hCustomerHome(d)))
+	// ... rest unchanged
+}
+```
+
+- [ ] **Step 5: Run tests, expect pass**
+
+```bash
+go test ./internal/server/...
+```
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add internal/server/middleware.go internal/server/middleware_test.go internal/server/server.go
+git commit -m "feat(server): 12 MB request body cap middleware"
+```
+
+---
+
 ### Task E3: Server tests — full auth gates + config GET/PATCH
 
 **Files:**
