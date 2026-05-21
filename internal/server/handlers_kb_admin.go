@@ -201,8 +201,18 @@ func kbWriteArticle(w http.ResponseWriter, r *http.Request, d Deps, id int64) {
 		_ = kbAdminStore(d).KBAdoptOrphanImages(r.Context(), saved.ID, imgIDs)
 	}
 
-	if id == 0 && saved.Status == "published" {
-		kbPublishEvent(d, "kb_article_published", saved, map[string]any{"by": saved.LastEditedBy})
+	switch {
+	case id == 0 && saved.Status == "published":
+		// First-publish on create.
+		kbPublishEvent(d, "kb_article_published", saved, map[string]any{
+			"by": saved.LastEditedBy,
+		})
+	case id != 0 && saved.Status == "published":
+		// Save against an already-published article — spec contracts
+		// kb_article_updated for the notifications plugin to route.
+		kbPublishEvent(d, "kb_article_updated", saved, map[string]any{
+			"changed_by": saved.LastEditedBy,
+		})
 	}
 
 	writeJSON(w, http.StatusOK, saved)
