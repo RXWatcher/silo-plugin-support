@@ -1,20 +1,27 @@
 package main
 
 import (
+	"context"
 	"crypto/sha256"
 	_ "embed"
 	"encoding/hex"
 	"fmt"
 	"os"
 	goruntime "runtime"
+	"sync/atomic"
 
 	"github.com/hashicorp/go-hclog"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	pluginv1 "github.com/ContinuumApp/continuum-plugin-sdk/pkg/pluginproto/continuum/plugin/v1"
 	publicmanifest "github.com/ContinuumApp/continuum-plugin-sdk/pkg/pluginsdk/manifest"
 	sdkruntime "github.com/ContinuumApp/continuum-plugin-sdk/pkg/pluginsdk/runtime"
 
 	"github.com/ContinuumApp/continuum-plugin-support/internal/httproutes"
+	"github.com/ContinuumApp/continuum-plugin-support/internal/migrate"
+	pluginrt "github.com/ContinuumApp/continuum-plugin-support/internal/runtime"
+	"github.com/ContinuumApp/continuum-plugin-support/internal/server"
+	"github.com/ContinuumApp/continuum-plugin-support/internal/store"
 )
 
 //go:embed manifest.json
@@ -29,21 +36,48 @@ func main() {
 	}
 
 	httpSrv := httproutes.NewServer()
+	var poolPtr atomic.Pointer[pgxpool.Pool]
 
-	// Phase A skeleton: the binary compiles and the SDK serve loop
-	// starts, but `Runtime` is intentionally omitted from
-	// CapabilityServers and `manifest` / `logger` aren't yet plumbed
-	// into the runtime or the server's Deps. The host's gRPC
-	// handshake will reject this binary until Phase E (task E2)
-	// wires `pluginrt.New(manifest, applyConfig)` here and adds
-	// `Runtime: rt` below — at which point the SDK is satisfied and
-	// `manifest` / `logger` flow into the runtime + server.Deps.
-	_ = manifest
-	_ = logger
+	applyConfig := func(cfg pluginrt.Config) error {
+		ctx := context.Background()
+		if err := migrate.Run(ctx, cfg.DatabaseURL); err != nil {
+			return fmt.Errorf("migrate: %w", err)
+		}
+		pcfg, err := pgxpool.ParseConfig(cfg.DatabaseURL)
+		if err != nil {
+			return fmt.Errorf("parse database_url: %w", err)
+		}
+		if pcfg.MaxConns < 4 {
+			pcfg.MaxConns = 4
+		}
+		pool, err := pgxpool.NewWithConfig(ctx, pcfg)
+		if err != nil {
+			return fmt.Errorf("connect database: %w", err)
+		}
+		st := store.New(pool)
+		cfg, err = st.Bootstrap(ctx, cfg)
+		if err != nil {
+			pool.Close()
+			return fmt.Errorf("bootstrap config: %w", err)
+		}
+		httpSrv.SetHandler(server.New(server.Deps{
+			DatabaseURL: cfg.DatabaseURL,
+			Logger:      logger,
+			ConfigStore: st,
+		}))
+		if old := poolPtr.Swap(pool); old != nil {
+			old.Close()
+		}
+		logger.Info("configured support plugin")
+		return nil
+	}
+
+	rt := pluginrt.New(manifest, applyConfig)
 
 	sdkruntime.Serve(sdkruntime.ServeConfig{
 		Logger: logger,
 		Servers: sdkruntime.CapabilityServers{
+			Runtime:    rt,
 			HttpRoutes: httpSrv,
 		},
 	})
