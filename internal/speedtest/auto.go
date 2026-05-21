@@ -34,10 +34,15 @@ type AutoGeoIPHint struct {
 	SourceLabel string `json:"sourceLabel,omitempty"`
 }
 
+// SourceLabelLookup returns the human-readable label for a geoip source
+// by ID. Returning "" is safe — the field is omitempty.
+type SourceLabelLookup func(id int64) string
+
 type Resolver struct {
-	store    EndpointLister
-	geoip    GeoIPResolver
-	strategy string
+	store      EndpointLister
+	geoip      GeoIPResolver
+	strategy   string
+	labelOfSrc SourceLabelLookup // optional; nil → no label populated
 }
 
 func NewResolver(store EndpointLister, geoip GeoIPResolver, strategy string) *Resolver {
@@ -45,6 +50,13 @@ func NewResolver(store EndpointLister, geoip GeoIPResolver, strategy string) *Re
 		strategy = "latency"
 	}
 	return &Resolver{store: store, geoip: geoip, strategy: strategy}
+}
+
+// WithLabelLookup wires in a store-backed label lookup. Returns the
+// receiver so the call can be chained onto NewResolver.
+func (r *Resolver) WithLabelLookup(f SourceLabelLookup) *Resolver {
+	r.labelOfSrc = f
+	return r
 }
 
 // Resolve picks the endpoint (or returns the latency candidate list)
@@ -68,10 +80,14 @@ func (r *Resolver) Resolve(ctx context.Context, clientIP string, req *http.Reque
 			for _, ep := range all {
 				if ep.Country == country {
 					ep := ep
+					hint := AutoGeoIPHint{Country: country, SourceID: srcID}
+					if r.labelOfSrc != nil && srcID > 0 {
+						hint.SourceLabel = r.labelOfSrc(srcID)
+					}
 					return AutoResolution{
 						Strategy: "geoip",
 						Endpoint: &ep,
-						GeoIP:    AutoGeoIPHint{Country: country, SourceID: srcID},
+						GeoIP:    hint,
 					}, nil
 				}
 			}

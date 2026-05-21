@@ -96,7 +96,14 @@ func main() {
 		}
 		chain := geoip.NewChain(geoipSources, &geoipStatusSink{st: st})
 
-		resolver := speedtest.NewResolver(st, chain, cfg.AutoStrategy)
+		resolver := speedtest.NewResolver(st, chain, cfg.AutoStrategy).
+			WithLabelLookup(func(id int64) string {
+				row, err := st.STGetGeoIPSource(context.Background(), id)
+				if err != nil {
+					return ""
+				}
+				return row.Label
+			})
 
 		httpSrv.SetHandler(server.New(server.Deps{
 			DatabaseURL:         cfg.DatabaseURL,
