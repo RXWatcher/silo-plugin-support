@@ -13,8 +13,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/ContinuumApp/continuum-plugin-support/internal/speedtest/geoip"
-	"github.com/ContinuumApp/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/continuum-plugin-support/internal/speedtest/geoip"
+	"github.com/RXWatcher/continuum-plugin-support/internal/store"
 )
 
 func stAdminStore(d Deps) *store.Store {

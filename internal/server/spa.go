@@ -8,7 +8,7 @@ import (
 	"io/fs"
 	"net/http"
 
-	pluginrt "github.com/ContinuumApp/continuum-plugin-support/internal/runtime"
+	pluginrt "github.com/RXWatcher/continuum-plugin-support/internal/runtime"
 )
 
 //go:embed public/dist/*

@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/ContinuumApp/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/continuum-plugin-support/internal/store"
 )
 
 // CronStore is the subset of store.Store the cron needs. Captured

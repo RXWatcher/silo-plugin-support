@@ -12,9 +12,9 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/ContinuumApp/continuum-plugin-support/internal/migrate"
-	"github.com/ContinuumApp/continuum-plugin-support/internal/speedtest"
-	"github.com/ContinuumApp/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/continuum-plugin-support/internal/migrate"
+	"github.com/RXWatcher/continuum-plugin-support/internal/speedtest"
+	"github.com/RXWatcher/continuum-plugin-support/internal/store"
 )
 
 func stTestDeps(t *testing.T) (Deps, *store.Store, func()) {

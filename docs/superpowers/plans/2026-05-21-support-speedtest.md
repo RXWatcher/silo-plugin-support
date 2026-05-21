@@ -1301,7 +1301,7 @@ package geoip
 import (
 	"fmt"
 
-	"github.com/ContinuumApp/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/continuum-plugin-support/internal/store"
 )
 
 // BuildSource constructs a concrete Source from a store row.
@@ -1854,7 +1854,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/ContinuumApp/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/continuum-plugin-support/internal/store"
 )
 
 type fakeEPStore struct{ endpoints []store.STEndpoint }
@@ -1932,7 +1932,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/ContinuumApp/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/continuum-plugin-support/internal/store"
 )
 
 // EndpointLister is the slice of Store the resolver needs.
@@ -2044,8 +2044,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ContinuumApp/continuum-plugin-support/internal/speedtest"
-	"github.com/ContinuumApp/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/continuum-plugin-support/internal/speedtest"
+	"github.com/RXWatcher/continuum-plugin-support/internal/store"
 )
 
 // stCustomerStore unwraps Deps.ConfigStore into the concrete *store.Store
@@ -2252,7 +2252,7 @@ package server
 import (
 	"context"
 
-	"github.com/ContinuumApp/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/continuum-plugin-support/internal/store"
 )
 
 // stPublishEvent assembles the base speedtest payload + extra keys
@@ -2312,7 +2312,7 @@ Wait — `Resolve` returns `speedtest.AutoResolution`, not `any`. Cleaner: keep 
 ```go
 import (
     // ... existing imports
-    "github.com/ContinuumApp/continuum-plugin-support/internal/speedtest"
+    "github.com/RXWatcher/continuum-plugin-support/internal/speedtest"
 )
 
 type Deps struct {
@@ -2363,8 +2363,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/ContinuumApp/continuum-plugin-support/internal/speedtest/geoip"
-	"github.com/ContinuumApp/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/continuum-plugin-support/internal/speedtest/geoip"
+	"github.com/RXWatcher/continuum-plugin-support/internal/store"
 )
 
 func stAdminStore(d Deps) *store.Store {
@@ -2899,8 +2899,8 @@ Imports to add at the top of `main.go`:
 ```go
 "time"
 
-"github.com/ContinuumApp/continuum-plugin-support/internal/speedtest"
-"github.com/ContinuumApp/continuum-plugin-support/internal/speedtest/geoip"
+"github.com/RXWatcher/continuum-plugin-support/internal/speedtest"
+"github.com/RXWatcher/continuum-plugin-support/internal/speedtest/geoip"
 ```
 
 ### Task G4: Add Config fields + flip Modules.Speedtest default
@@ -3006,9 +3006,9 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/ContinuumApp/continuum-plugin-support/internal/migrate"
-	"github.com/ContinuumApp/continuum-plugin-support/internal/speedtest"
-	"github.com/ContinuumApp/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/continuum-plugin-support/internal/migrate"
+	"github.com/RXWatcher/continuum-plugin-support/internal/speedtest"
+	"github.com/RXWatcher/continuum-plugin-support/internal/store"
 )
 
 func stTestDeps(t *testing.T) (Deps, *store.Store, func()) {

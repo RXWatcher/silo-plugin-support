@@ -11,8 +11,8 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/hashicorp/go-hclog"
 
-	pluginrt "github.com/ContinuumApp/continuum-plugin-support/internal/runtime"
-	"github.com/ContinuumApp/continuum-plugin-support/internal/speedtest"
+	pluginrt "github.com/RXWatcher/continuum-plugin-support/internal/runtime"
+	"github.com/RXWatcher/continuum-plugin-support/internal/speedtest"
 )
 
 type ConfigStore interface {

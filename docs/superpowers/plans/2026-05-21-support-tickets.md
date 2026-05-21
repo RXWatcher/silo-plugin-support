@@ -1359,7 +1359,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/ContinuumApp/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/continuum-plugin-support/internal/store"
 )
 
 type fakeStore struct {
@@ -1476,7 +1476,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/ContinuumApp/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/continuum-plugin-support/internal/store"
 )
 
 // CronStore is the slice of *store.Store the cron needs.
@@ -1577,8 +1577,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/ContinuumApp/continuum-plugin-support/internal/store"
-	"github.com/ContinuumApp/continuum-plugin-support/internal/tickets"
+	"github.com/RXWatcher/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/continuum-plugin-support/internal/tickets"
 )
 
 func tkCustomerStore(d Deps) *store.Store {
@@ -1908,7 +1908,7 @@ package server
 import (
 	"context"
 
-	"github.com/ContinuumApp/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/continuum-plugin-support/internal/store"
 )
 
 // tkPublishEvent assembles the base ticket payload + extra keys and
@@ -1978,8 +1978,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/ContinuumApp/continuum-plugin-support/internal/store"
-	"github.com/ContinuumApp/continuum-plugin-support/internal/tickets"
+	"github.com/RXWatcher/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/continuum-plugin-support/internal/tickets"
 )
 
 func tkAdminStore(d Deps) *store.Store {
@@ -2466,7 +2466,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/ContinuumApp/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/continuum-plugin-support/internal/store"
 )
 
 const tkAttachmentMaxBytes = 10 << 20 // 10 MB
@@ -2778,8 +2778,8 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/ContinuumApp/continuum-plugin-support/internal/migrate"
-	"github.com/ContinuumApp/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/continuum-plugin-support/internal/migrate"
+	"github.com/RXWatcher/continuum-plugin-support/internal/store"
 )
 
 func tkTestDeps(t *testing.T) (Deps, *store.Store, func()) {

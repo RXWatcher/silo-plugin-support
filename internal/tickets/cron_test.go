@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/ContinuumApp/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/continuum-plugin-support/internal/store"
 )
 
 type fakeStore struct {

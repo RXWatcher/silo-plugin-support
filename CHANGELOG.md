@@ -129,7 +129,7 @@ to module shipping milestones rather than API stability.
 - Two missing SPA interaction tests added (sidebar-click section
   switch, switch-fire onSave assertion).
 
-[0.4.0]: https://github.com/ContinuumApp/continuum-plugin-support/releases/tag/v0.4.0
-[0.3.0]: https://github.com/ContinuumApp/continuum-plugin-support/releases/tag/v0.3.0
-[0.2.0]: https://github.com/ContinuumApp/continuum-plugin-support/releases/tag/v0.2.0
-[0.1.0]: https://github.com/ContinuumApp/continuum-plugin-support/releases/tag/v0.1.0
+[0.4.0]: https://github.com/RXWatcher/continuum-plugin-support/releases/tag/v0.4.0
+[0.3.0]: https://github.com/RXWatcher/continuum-plugin-support/releases/tag/v0.3.0
+[0.2.0]: https://github.com/RXWatcher/continuum-plugin-support/releases/tag/v0.2.0
+[0.1.0]: https://github.com/RXWatcher/continuum-plugin-support/releases/tag/v0.1.0

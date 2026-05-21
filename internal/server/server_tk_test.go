@@ -12,8 +12,8 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/ContinuumApp/continuum-plugin-support/internal/migrate"
-	"github.com/ContinuumApp/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/continuum-plugin-support/internal/migrate"
+	"github.com/RXWatcher/continuum-plugin-support/internal/store"
 )
 
 func tkTestDeps(t *testing.T) (Deps, *store.Store, func()) {

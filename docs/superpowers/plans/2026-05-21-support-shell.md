@@ -22,7 +22,7 @@ All paths relative to `/opt/continuum_plugins/continuum-plugin-support/`.
 
 | File | Responsibility |
 |---|---|
-| `go.mod`, `go.sum` | Module path `github.com/ContinuumApp/continuum-plugin-support`, deps match public-catalog |
+| `go.mod`, `go.sum` | Module path `github.com/RXWatcher/continuum-plugin-support`, deps match public-catalog |
 | `Makefile` | `build` / `web-build` / `test` / `test-go` / `test-web` / `clean` |
 | `README.md` | One-paragraph overview, links to spec docs |
 | `.gitignore` | Built binary, web/node_modules, web/dist, web/*.tsbuildinfo, web/vite.config.{js,d.ts}, internal/server/public/dist |
@@ -92,7 +92,7 @@ All paths relative to `/opt/continuum_plugins/continuum-plugin-support/`.
 ```bash
 cd /opt/continuum_plugins/continuum-plugin-support
 cat > go.mod <<'EOF'
-module github.com/ContinuumApp/continuum-plugin-support
+module github.com/RXWatcher/continuum-plugin-support
 
 go 1.26.0
 
@@ -219,7 +219,7 @@ import (
 	publicmanifest "github.com/ContinuumApp/continuum-plugin-sdk/pkg/pluginsdk/manifest"
 	sdkruntime "github.com/ContinuumApp/continuum-plugin-sdk/pkg/pluginsdk/runtime"
 
-	"github.com/ContinuumApp/continuum-plugin-support/internal/httproutes"
+	"github.com/RXWatcher/continuum-plugin-support/internal/httproutes"
 )
 
 //go:embed manifest.json
@@ -780,7 +780,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	pluginrt "github.com/ContinuumApp/continuum-plugin-support/internal/runtime"
+	pluginrt "github.com/RXWatcher/continuum-plugin-support/internal/runtime"
 )
 
 // GetConfig reads the singleton app_config row. Returns the
@@ -1078,7 +1078,7 @@ import (
 	"io/fs"
 	"net/http"
 
-	pluginrt "github.com/ContinuumApp/continuum-plugin-support/internal/runtime"
+	pluginrt "github.com/RXWatcher/continuum-plugin-support/internal/runtime"
 )
 
 //go:embed public/dist/* public/dist/assets/*
@@ -1221,7 +1221,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	pluginrt "github.com/ContinuumApp/continuum-plugin-support/internal/runtime"
+	pluginrt "github.com/RXWatcher/continuum-plugin-support/internal/runtime"
 )
 
 func hAdminPage(d Deps) http.HandlerFunc {
@@ -1332,7 +1332,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/hashicorp/go-hclog"
 
-	pluginrt "github.com/ContinuumApp/continuum-plugin-support/internal/runtime"
+	pluginrt "github.com/RXWatcher/continuum-plugin-support/internal/runtime"
 )
 
 type ConfigStore interface {
@@ -1416,11 +1416,11 @@ import (
 	publicmanifest "github.com/ContinuumApp/continuum-plugin-sdk/pkg/pluginsdk/manifest"
 	sdkruntime "github.com/ContinuumApp/continuum-plugin-sdk/pkg/pluginsdk/runtime"
 
-	"github.com/ContinuumApp/continuum-plugin-support/internal/httproutes"
-	"github.com/ContinuumApp/continuum-plugin-support/internal/migrate"
-	pluginrt "github.com/ContinuumApp/continuum-plugin-support/internal/runtime"
-	"github.com/ContinuumApp/continuum-plugin-support/internal/server"
-	"github.com/ContinuumApp/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/continuum-plugin-support/internal/httproutes"
+	"github.com/RXWatcher/continuum-plugin-support/internal/migrate"
+	pluginrt "github.com/RXWatcher/continuum-plugin-support/internal/runtime"
+	"github.com/RXWatcher/continuum-plugin-support/internal/server"
+	"github.com/RXWatcher/continuum-plugin-support/internal/store"
 )
 
 //go:embed manifest.json
@@ -1639,7 +1639,7 @@ import (
 	"sync"
 	"testing"
 
-	pluginrt "github.com/ContinuumApp/continuum-plugin-support/internal/runtime"
+	pluginrt "github.com/RXWatcher/continuum-plugin-support/internal/runtime"
 )
 
 type fakeConfigStore struct {

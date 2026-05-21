@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ContinuumApp/continuum-plugin-support/internal/speedtest"
-	"github.com/ContinuumApp/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/continuum-plugin-support/internal/speedtest"
+	"github.com/RXWatcher/continuum-plugin-support/internal/store"
 )
 
 func stCustomerStore(d Deps) *store.Store {

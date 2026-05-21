@@ -1832,7 +1832,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/ContinuumApp/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/continuum-plugin-support/internal/store"
 )
 
 // hKBBrowsePage renders the customer SPA shell in browse mode.
@@ -2066,9 +2066,9 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/ContinuumApp/continuum-plugin-support/internal/htmlx"
-	"github.com/ContinuumApp/continuum-plugin-support/internal/kb"
-	"github.com/ContinuumApp/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/continuum-plugin-support/internal/htmlx"
+	"github.com/RXWatcher/continuum-plugin-support/internal/kb"
+	"github.com/RXWatcher/continuum-plugin-support/internal/store"
 )
 
 // hKBAdminListPage etc render the admin SPA shell with the right mode.
@@ -2648,7 +2648,7 @@ For now stub the event call:
 cat > internal/server/kb_events.go <<'EOF'
 package server
 
-import "github.com/ContinuumApp/continuum-plugin-support/internal/store"
+import "github.com/RXWatcher/continuum-plugin-support/internal/store"
 
 // kbPublishEvent is the helper Phase G replaces with the real
 // host.PublishEvent call. Stubbed here so the admin handlers compile
@@ -2694,7 +2694,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/ContinuumApp/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/continuum-plugin-support/internal/store"
 )
 
 const kbImageMaxBytes = 5 << 20 // 5 MB
@@ -2928,7 +2928,7 @@ package server
 import (
 	"context"
 
-	"github.com/ContinuumApp/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/continuum-plugin-support/internal/store"
 )
 
 // kbPublishEvent assembles the base payload + extra keys and hands
@@ -3031,7 +3031,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ContinuumApp/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/continuum-plugin-support/internal/store"
 )
 
 // fakeStore is a hand-rolled minimal stand-in covering only the
@@ -3139,7 +3139,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/ContinuumApp/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/continuum-plugin-support/internal/store"
 )
 
 // CronStore is the subset of store.Store the cron needs. Captured
@@ -3404,8 +3404,8 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/ContinuumApp/continuum-plugin-support/internal/migrate"
-	"github.com/ContinuumApp/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/continuum-plugin-support/internal/migrate"
+	"github.com/RXWatcher/continuum-plugin-support/internal/store"
 )
 
 // kbTestDeps spins a real Postgres-backed Store. Skips the calling

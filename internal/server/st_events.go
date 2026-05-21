@@ -3,7 +3,7 @@ package server
 import (
 	"context"
 
-	"github.com/ContinuumApp/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/continuum-plugin-support/internal/store"
 )
 
 // stPublishEvent assembles the base speedtest payload + extra keys

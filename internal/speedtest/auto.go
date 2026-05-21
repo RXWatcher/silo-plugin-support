@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/ContinuumApp/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/continuum-plugin-support/internal/store"
 )
 
 // EndpointLister is the slice of Store the resolver needs.

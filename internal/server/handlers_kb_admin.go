@@ -9,9 +9,9 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/ContinuumApp/continuum-plugin-support/internal/htmlx"
-	"github.com/ContinuumApp/continuum-plugin-support/internal/kb"
-	"github.com/ContinuumApp/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/continuum-plugin-support/internal/htmlx"
+	"github.com/RXWatcher/continuum-plugin-support/internal/kb"
+	"github.com/RXWatcher/continuum-plugin-support/internal/store"
 )
 
 // Admin SPA shell handlers.

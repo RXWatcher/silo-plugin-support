@@ -9,8 +9,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/ContinuumApp/continuum-plugin-support/internal/store"
-	"github.com/ContinuumApp/continuum-plugin-support/internal/tickets"
+	"github.com/RXWatcher/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/continuum-plugin-support/internal/tickets"
 )
 
 func tkCustomerStore(d Deps) *store.Store {

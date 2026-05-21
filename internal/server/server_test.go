@@ -9,7 +9,7 @@ import (
 	"sync"
 	"testing"
 
-	pluginrt "github.com/ContinuumApp/continuum-plugin-support/internal/runtime"
+	pluginrt "github.com/RXWatcher/continuum-plugin-support/internal/runtime"
 )
 
 type fakeConfigStore struct {

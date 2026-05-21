@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	pluginrt "github.com/ContinuumApp/continuum-plugin-support/internal/runtime"
+	pluginrt "github.com/RXWatcher/continuum-plugin-support/internal/runtime"
 )
 
 func hAdminPage(d Deps) http.HandlerFunc {
