@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -518,4 +519,33 @@ func kbAdminStore(d Deps) *store.Store {
 		return cs
 	}
 	return nil
+}
+
+// hKBAdminRunCron exposes PublishDue + UnhelpfulSweep as a single
+// admin-triggered endpoint. A native scheduled_task.v1 SDK capability
+// is a follow-up.
+func hKBAdminRunCron(d Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		c := &kb.Cron{
+			Store:     kbAdminStore(d),
+			Publisher: kbEventEmitter{d: d},
+		}
+		if err := c.PublishDue(r.Context()); err != nil {
+			writeInternal(w, r, d, "kb_cron_publish_failed", err)
+			return
+		}
+		if err := c.UnhelpfulSweep(r.Context()); err != nil {
+			writeInternal(w, r, d, "kb_cron_unhelpful_failed", err)
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
+	}
+}
+
+// kbEventEmitter bridges the cron's EventEmitter interface to the
+// existing kbPublishEvent helper.
+type kbEventEmitter struct{ d Deps }
+
+func (e kbEventEmitter) PublishKBArticleEvent(_ context.Context, name string, a store.KBArticle, extra map[string]any) {
+	kbPublishEvent(e.d, name, a, extra)
 }
