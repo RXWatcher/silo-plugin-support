@@ -64,7 +64,8 @@ continuum-plugin-support/
 │       ├── components/
 │       │   ├── ui/                      # shadcn primitives (button, card, switch, label, etc.)
 │       │   ├── shared/                  # TopBar, ModuleCard
-│       │   └── admin/                   # ModuleTogglesPanel
+│       │   └── admin/                   # AdminLayout, AdminSidebar, AdminOverview,
+│       │                                # AdminConfig, ModuleStatusCard, ModuleTogglesPanel
 │       └── api/        admin.ts
 ├── Makefile
 ├── go.mod / go.sum
@@ -240,22 +241,54 @@ a "Coming soon" badge.
 
 ### Admin home (`mode: "admin-home"`)
 
-`<TopBar>` "Support admin" + `<ModuleTogglesPanel>`:
+Full app shell with persistent left sidebar + main content. The
+shell-internal section is React state — no URL change, no
+client-side router (matches public-catalog's deliberate avoidance).
 
 ```
-+-----------------------------------------------------+
-|  Modules                                            |
-|  ─────────────────────────────────────────────────  |
-|  [○] Knowledge Base       (not shipped yet)         |
-|  [○] Speedtest            (not shipped yet)         |
-|  [○] Tickets              (not shipped yet)         |
-|  [○] AI Assistance        (not shipped yet)         |
-+-----------------------------------------------------+
++----------------+--------------------------------------+
+| SUPPORT ADMIN  | Overview                             |
+|                +--------------------------------------+
+| · Overview     | System                               |
+| · Configuration|   ● Database connected               |
+| ─────────      |   Plugin version 0.1.0               |
+| · KB           |                                      |
+|   coming soon  | Modules                              |
+| · Speedtest    | ┌────────────────────────────────┐   |
+|   coming soon  | │ Knowledge Base   ○ not shipped │   |
+| · Tickets      | ├────────────────────────────────┤   |
+|   coming soon  | │ Speedtest        ○ not shipped │   |
+| · AI           | ├────────────────────────────────┤   |
+|   coming soon  | │ ...                            │   |
+|                | └────────────────────────────────┘   |
++----------------+--------------------------------------+
 ```
 
-Once any module ships, its toggle becomes interactive and an
-admin-nav link appears underneath ("Manage Knowledge Base", etc.).
-The shell's release ships none enabled.
+**Sidebar entries (shell-built-ins):**
+
+- **Overview** (default selected) — `<AdminOverview>` renders the system
+  status row (DB connection, plugin version, manifest version) plus a
+  module status grid of `<ModuleStatusCard>` (one per module, with
+  enabled / disabled / not-shipped state and a "Manage →" link when
+  the module is enabled).
+- **Configuration** — `<AdminConfig>` houses the
+  `<ModuleTogglesPanel>` (the four switches) plus a placeholder section
+  for future plugin-wide settings.
+
+**Sidebar entries (per-module, populated as modules ship):**
+
+- **Knowledge Base** — when `modules.kb` is true, the sidebar entry is
+  an `<a href="./kb">` linking to the KB module's admin landing
+  (route declared in the KB module's manifest release, not in the
+  shell's). Until then the entry is rendered as a non-clickable
+  "coming soon" placeholder so operators see what's coming.
+- Same pattern for Speedtest / Tickets / AI.
+
+Internal section switching is handled by React state in
+`<AdminLayout>`; the URL stays at `/admin` so there are no extra
+manifest routes to declare. The browser back/forward buttons don't
+cross sections — that's a deliberate trade for the no-client-router
+constraint and keeps deep-linking to a section out of scope for v1.
 
 ## Bootstrap Payload
 
@@ -300,7 +333,10 @@ SPA (vitest):
 
 - `bootstrap.ts` parse + defaults.
 - ModuleCard renders enabled vs disabled variants.
+- ModuleStatusCard renders not-shipped vs disabled vs enabled variants.
 - ModuleTogglesPanel: switch click → onSave called with patch.
+- AdminLayout: sidebar entry click switches the rendered section;
+  per-module entries are clickable when enabled, placeholders when not.
 
 ## Out Of Scope
 
