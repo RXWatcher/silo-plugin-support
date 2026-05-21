@@ -112,12 +112,14 @@ func hTKAdminReply(d Deps) http.HandlerFunc {
 		if t.Status == "open" {
 			if err := tickets.AllowTransition(t.Status, "in_progress", tickets.TriggerAdminReply, timeNow()); err == nil {
 				updated, _ := st.TKUpdateTicketStatus(r.Context(), t.ID, "in_progress", nil, nil)
+				tkEnrichForEvent(r.Context(), d, &updated)
 				tkPublishEvent(d, "ticket_status_changed", updated, map[string]any{
 					"from": t.Status, "to": "in_progress", "by": adminID,
 				})
 				t = updated
 			}
 		}
+		tkEnrichForEvent(r.Context(), d, &t)
 		tkPublishEvent(d, "ticket_replied", t, map[string]any{
 			"author_role": "admin", "author_id": adminID, "excerpt": excerpt(req.Body, 280),
 		})
@@ -191,6 +193,7 @@ func hTKAdminStatus(d Deps) http.HandlerFunc {
 			TicketID: t.ID, Kind: "status_change", AuthorID: adminID, AuthorRole: "admin",
 			Body: "Status changed: " + t.Status + " → " + req.To,
 		})
+		tkEnrichForEvent(r.Context(), d, &updated)
 		tkPublishEvent(d, "ticket_status_changed", updated, map[string]any{
 			"from": t.Status, "to": req.To, "by": adminID,
 		})
@@ -227,6 +230,7 @@ func hTKAdminAssign(d Deps) http.HandlerFunc {
 			writeInternal(w, r, d, "tk_assign_failed", err)
 			return
 		}
+		tkEnrichForEvent(r.Context(), d, &updated)
 		tkPublishEvent(d, "ticket_assigned", updated, map[string]any{
 			"from_admin_id": t.AssignedAdminID, "to_admin_id": req.AdminID,
 		})

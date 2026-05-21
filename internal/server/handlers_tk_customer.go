@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -17,6 +18,17 @@ func tkCustomerStore(d Deps) *store.Store {
 		return cs
 	}
 	return nil
+}
+
+// tkEnrichForEvent fills Category and Subcategory on the ticket so the event
+// payload includes them. Best-effort — a failed aux load publishes a partial
+// payload rather than blocking the request.
+func tkEnrichForEvent(ctx context.Context, d Deps, t *store.TKTicket) {
+	st := tkCustomerStore(d)
+	if st == nil || t == nil {
+		return
+	}
+	_ = st.TKLoadTicketAux(ctx, t)
 }
 
 // SPA shell handlers.
@@ -237,6 +249,7 @@ func hTKCustomerCreate(d Deps) http.HandlerFunc {
 			return
 		}
 
+		tkEnrichForEvent(r.Context(), d, &saved)
 		tkPublishEvent(d, "ticket_submitted", saved, nil)
 		writeJSON(w, http.StatusOK, saved)
 	}
@@ -294,6 +307,7 @@ func hTKCustomerReply(d Deps) http.HandlerFunc {
 		if t.Status == "waiting_customer" {
 			if err := tickets.AllowTransition(t.Status, "in_progress", tickets.TriggerCustomerReply, timeNow()); err == nil {
 				updated, _ := st.TKUpdateTicketStatus(r.Context(), t.ID, "in_progress", nil, nil)
+				tkEnrichForEvent(r.Context(), d, &updated)
 				tkPublishEvent(d, "ticket_status_changed", updated, map[string]any{
 					"from": t.Status, "to": "in_progress", "by": "customer",
 				})
@@ -301,6 +315,7 @@ func hTKCustomerReply(d Deps) http.HandlerFunc {
 			}
 		}
 
+		tkEnrichForEvent(r.Context(), d, &t)
 		tkPublishEvent(d, "ticket_replied", t, map[string]any{
 			"author_role": "customer", "author_id": t.CustomerID,
 			"excerpt": excerpt(req.Body, 280),
@@ -350,6 +365,7 @@ func hTKCustomerReopen(d Deps) http.HandlerFunc {
 			TicketID: t.ID, Kind: "system", AuthorID: "system", AuthorRole: "system",
 			Body: "Reopened by customer",
 		})
+		tkEnrichForEvent(r.Context(), d, &updated)
 		tkPublishEvent(d, "ticket_reopened", updated, map[string]any{"by": "customer"})
 		tkPublishEvent(d, "ticket_status_changed", updated, map[string]any{
 			"from": "resolved", "to": "in_progress", "by": "customer",
