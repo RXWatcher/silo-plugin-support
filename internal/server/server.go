@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/go-hclog"
 
 	pluginrt "github.com/ContinuumApp/continuum-plugin-support/internal/runtime"
+	"github.com/ContinuumApp/continuum-plugin-support/internal/speedtest"
 )
 
 type ConfigStore interface {
@@ -30,6 +31,11 @@ type Deps struct {
 	Logger         hclog.Logger
 	ConfigStore    ConfigStore
 	EventPublisher EventPublisher
+
+	// Speedtest module wiring; resolver-nil → 503 from the handler.
+	STAutoResolver      *speedtest.Resolver
+	STClientIPStorage   string  // "truncated" (default) | "off"
+	STSlowThresholdMbps float64
 }
 
 func New(d Deps) http.Handler {
