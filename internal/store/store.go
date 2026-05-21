@@ -8,4 +8,6 @@ type Store struct {
 	pool *pgxpool.Pool
 }
 
+// New wraps an already-built pgxpool. The pool's lifecycle stays
+// with main.go — Store does not close it.
 func New(pool *pgxpool.Pool) *Store { return &Store{pool: pool} }

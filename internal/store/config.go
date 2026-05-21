@@ -8,8 +8,11 @@ import (
 	pluginrt "github.com/ContinuumApp/continuum-plugin-support/internal/runtime"
 )
 
-// GetConfig reads the singleton app_config row. Returns the
-// in-code default if the row is empty or missing.
+// GetConfig reads the singleton app_config row. On any read or
+// parse failure it returns (DefaultAppConfig(), wrapped error) so
+// callers like Bootstrap can keep going during first-run / DB-
+// unreachable windows. Inspect the error if you need to distinguish
+// empty-row from real failure.
 func (s *Store) GetConfig(ctx context.Context) (pluginrt.Config, error) {
 	var data []byte
 	err := s.pool.QueryRow(ctx,
@@ -45,6 +48,8 @@ func (s *Store) UpdateConfig(ctx context.Context, cfg pluginrt.Config) error {
 // persisted, applies in-code defaults, normalises, and persists the
 // result. Returns the canonical config that survives reinstalls.
 func (s *Store) Bootstrap(ctx context.Context, cfg pluginrt.Config) (pluginrt.Config, error) {
+	// Not transactional — plugin startup is serialized by main.go's
+	// onConfig callback, so there's no race against another writer.
 	stored, err := s.GetConfig(ctx)
 	if err != nil {
 		stored = pluginrt.DefaultAppConfig()
