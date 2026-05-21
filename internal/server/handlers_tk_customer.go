@@ -42,6 +42,17 @@ func hTKDetailPage(d Deps) http.HandlerFunc {
 	}
 }
 
+func hTKNewPage(d Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		writeSPA(w, r, supportBootstrap{
+			Mode: "tickets-new", Theme: adminTheme(r),
+			Modules: currentModules(r.Context(), d),
+			UserID:  r.Header.Get("X-Continuum-User-Id"),
+			IsAdmin: r.Header.Get("X-Continuum-User-Role") == "admin",
+		}, http.StatusOK)
+	}
+}
+
 // --- Categories (form rendering) -----------------------------------
 
 type tkCategoriesResponse struct {

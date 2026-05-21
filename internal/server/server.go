@@ -126,6 +126,7 @@ func New(d Deps) http.Handler {
 
 	// Tickets module routes.
 	r.Get ("/tickets",                            requireUser(hTKListPage(d)))
+	r.Get ("/tickets/new",                        requireUser(hTKNewPage(d)))
 	r.Get ("/tickets/{tracking_number}",          requireUser(hTKDetailPage(d)))
 	r.Get ("/api/customer/categories",            requireUser(hTKCategoriesForCustomer(d)))
 	r.Get ("/api/customer/tickets",               requireUser(hTKCustomerList(d)))
