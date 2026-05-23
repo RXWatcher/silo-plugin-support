@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/RXWatcher/continuum-plugin-support/internal/speedtest"
-	"github.com/RXWatcher/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/silo-plugin-support/internal/speedtest"
+	"github.com/RXWatcher/silo-plugin-support/internal/store"
 )
 
 func stCustomerStore(d Deps) *store.Store {
@@ -24,8 +24,8 @@ func hSTSpeedtestPage(d Deps) http.HandlerFunc {
 			Mode:    "speedtest",
 			Theme:   adminTheme(r),
 			Modules: currentModules(r.Context(), d),
-			UserID:  r.Header.Get("X-Continuum-User-Id"),
-			IsAdmin: r.Header.Get("X-Continuum-User-Role") == "admin",
+			UserID:  r.Header.Get("X-Silo-User-Id"),
+			IsAdmin: r.Header.Get("X-Silo-User-Role") == "admin",
 		}, http.StatusOK)
 	}
 }
@@ -69,7 +69,7 @@ type stResultRequest struct {
 
 func hSTCustomerSaveResult(d Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		customerID := r.Header.Get("X-Continuum-User-Id")
+		customerID := r.Header.Get("X-Silo-User-Id")
 
 		// 60s per-customer rate limit.
 		last, err := stCustomerStore(d).STLastResultAt(r.Context(), customerID)
@@ -131,7 +131,7 @@ func hSTCustomerSaveResult(d Deps) http.HandlerFunc {
 func hSTCustomerHistory(d Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		hist, err := stCustomerStore(d).STCustomerHistory(r.Context(),
-			r.Header.Get("X-Continuum-User-Id"), 20)
+			r.Header.Get("X-Silo-User-Id"), 20)
 		if err != nil {
 			writeInternal(w, r, d, "st_history_failed", err)
 			return
@@ -141,7 +141,7 @@ func hSTCustomerHistory(d Deps) http.HandlerFunc {
 }
 
 // clientIP returns the best-guess client IP, preferring X-Forwarded-For's
-// first entry when present (Continuum runs behind a reverse proxy).
+// first entry when present (Silo runs behind a reverse proxy).
 func clientIP(r *http.Request) string {
 	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
 		if i := strings.IndexByte(xff, ','); i > 0 {

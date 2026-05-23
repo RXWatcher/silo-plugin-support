@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/RXWatcher/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/silo-plugin-support/internal/store"
 )
 
 type fakeEPStore struct{ endpoints []store.STEndpoint }

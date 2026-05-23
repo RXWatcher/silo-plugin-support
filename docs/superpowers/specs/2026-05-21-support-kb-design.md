@@ -17,7 +17,7 @@ by giving customers answers before they need to ask. Plugged into the
 support plugin's existing shell — adds two customer surfaces (browse
 + detail), one admin surface (article CRUD + taxonomy admin), a
 scheduled-publish cron, and events that the existing
-`continuum.notifications` plugin routes to whatever delivery channels
+`silo.notifications` plugin routes to whatever delivery channels
 the operator configured.
 
 ## Decisions Locked During Brainstorm
@@ -87,7 +87,7 @@ CREATE TABLE kb_articles (
         CHECK (status IN ('draft','published')),
     publish_at      TIMESTAMPTZ,                          -- when draft should auto-publish
     published_at    TIMESTAMPTZ,                          -- set when status becomes 'published'
-    last_edited_by  TEXT NOT NULL,                        -- X-Continuum-User-Id snapshot
+    last_edited_by  TEXT NOT NULL,                        -- X-Silo-User-Id snapshot
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     search_vector   tsvector GENERATED ALWAYS AS (
@@ -339,9 +339,9 @@ and name), `tags` (array of slugs), `deep_link` (e.g. `<mount>/kb/{slug}`).
 
 | Event | Extra keys | When |
 |---|---|---|
-| `plugin.continuum.support.kb_article_published` | `published_at`, `by` (admin id or "system" for scheduled) | First publish or scheduled cron flip |
-| `plugin.continuum.support.kb_article_updated`   | `changed_by` (admin id), `since` (last update) | Any save to a `published` article |
-| `plugin.continuum.support.kb_article_unhelpful` | `helpful_ratio_24h`, `threshold`, `votes_24h` | Daily cron: any published article whose last-24h helpful ratio drops below the configured threshold (default 50 %, configurable via `kb.unhelpful_alert_threshold`) and has at least 5 votes in the window. Operator can route this to notifications for "this article may need a rewrite". |
+| `plugin.silo.support.kb_article_published` | `published_at`, `by` (admin id or "system" for scheduled) | First publish or scheduled cron flip |
+| `plugin.silo.support.kb_article_updated`   | `changed_by` (admin id), `since` (last update) | Any save to a `published` article |
+| `plugin.silo.support.kb_article_unhelpful` | `helpful_ratio_24h`, `threshold`, `votes_24h` | Daily cron: any published article whose last-24h helpful ratio drops below the configured threshold (default 50 %, configurable via `kb.unhelpful_alert_threshold`) and has at least 5 votes in the window. Operator can route this to notifications for "this article may need a rewrite". |
 
 ## SPA Bootstrap Modes
 
@@ -421,7 +421,7 @@ func PublishDue(ctx context.Context, st *store.Store) error {
     if err != nil { return err }
     for _, r := range rows {
         if err := st.KBPublishArticle(ctx, r.ID); err != nil { log; continue }
-        publisher.Publish("plugin.continuum.support.kb_article_published", ...)
+        publisher.Publish("plugin.silo.support.kb_article_published", ...)
     }
     return nil
 }
@@ -487,7 +487,7 @@ articles below threshold.
 - A "what links here" panel on the admin article view
 - Customer "saved articles" / bookmarks
 - Sitemap / SEO metadata (KB is auth-only anyway)
-- Public surface — KB stays behind Continuum login
+- Public surface — KB stays behind Silo login
 
 ## Success Criteria
 

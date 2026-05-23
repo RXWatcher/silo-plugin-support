@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to the Continuum Support Plugin.
+All notable changes to the Silo Support Plugin.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/);
 the project loosely follows SemVer where the manifest version maps
@@ -113,7 +113,7 @@ to module shipping milestones rather than API stability.
   with `?section=` URL state, app_config singleton + GET/PATCH API,
   body-cap middleware (12 MB), CSP / X-Frame-Options / nosniff /
   Referrer-Policy security headers on every response,
-  X-Continuum-User-Id + X-Continuum-User-Role auth gates.
+  X-Silo-User-Id + X-Silo-User-Role auth gates.
 - 1 shell-side table: `app_config` (singleton with `CHECK (id=1)`).
 - chi router, golang-migrate via embedded SQL with pgx/v5 driver.
 - runtime.Configure RPC + module toggles (ModuleToggles{KB,
@@ -129,7 +129,7 @@ to module shipping milestones rather than API stability.
 - Two missing SPA interaction tests added (sidebar-click section
   switch, switch-fire onSave assertion).
 
-[0.4.0]: https://github.com/RXWatcher/continuum-plugin-support/releases/tag/v0.4.0
-[0.3.0]: https://github.com/RXWatcher/continuum-plugin-support/releases/tag/v0.3.0
-[0.2.0]: https://github.com/RXWatcher/continuum-plugin-support/releases/tag/v0.2.0
-[0.1.0]: https://github.com/RXWatcher/continuum-plugin-support/releases/tag/v0.1.0
+[0.4.0]: https://github.com/RXWatcher/silo-plugin-support/releases/tag/v0.4.0
+[0.3.0]: https://github.com/RXWatcher/silo-plugin-support/releases/tag/v0.3.0
+[0.2.0]: https://github.com/RXWatcher/silo-plugin-support/releases/tag/v0.2.0
+[0.1.0]: https://github.com/RXWatcher/silo-plugin-support/releases/tag/v0.1.0

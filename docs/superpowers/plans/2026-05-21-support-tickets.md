@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add the Tickets module to `continuum-plugin-support` — customer-opens-ticket-via-category-form, admin-handles-via-queue, status lifecycle with reopen + configurable auto-close, append-only entries with internal notes, 10 MB bytea attachments, events to the notifications plugin.
+**Goal:** Add the Tickets module to `silo-plugin-support` — customer-opens-ticket-via-category-form, admin-handles-via-queue, status lifecycle with reopen + configurable auto-close, append-only entries with internal notes, 10 MB bytea attachments, events to the notifications plugin.
 
 **Architecture:** Extends the support plugin shell + KB + Speedtest. Eight new tables under the `support` schema (`tk_categories`, `tk_subcategories`, `tk_category_fields`, `tk_tickets`, `tk_ticket_entries`, `tk_ticket_field_values`, `tk_attachments`, `tk_ticket_sequence`). New routes added to the existing manifest. Status transitions enforced server-side via a transition map; forbidden transitions return 409. SPA gains 4 new bootstrap modes; 30-second polling on queue + detail (no SSE — SDK `Handle` is request/response).
 
@@ -15,7 +15,7 @@
 
 ## File Structure
 
-All paths relative to `/opt/continuum_plugins/continuum-plugin-support/`.
+All paths relative to `/opt/silo_plugins/silo-plugin-support/`.
 
 ### Go side
 
@@ -37,8 +37,8 @@ All paths relative to `/opt/continuum_plugins/continuum-plugin-support/`.
 | `internal/server/tk_events.go` | Event publisher helpers (ticket_submitted / replied / status_changed / assigned / resolved / reopened / closed) |
 | `internal/server/server.go` | Register tk_* routes + extend Deps with tickets config |
 | `internal/server/spa.go` | (no change — `supportBootstrap.Mode` is `string`, modes added in TS) |
-| `cmd/continuum-plugin-support/main.go` | Pass tickets config fields to server.Deps |
-| `cmd/continuum-plugin-support/manifest.json` | Add tk routes + bump version to 0.4.0 |
+| `cmd/silo-plugin-support/main.go` | Pass tickets config fields to server.Deps |
+| `cmd/silo-plugin-support/manifest.json` | Add tk routes + bump version to 0.4.0 |
 | `internal/runtime/runtime.go` | Add ticket config fields + flip Modules.Tickets default to true |
 
 ### Web side
@@ -80,7 +80,7 @@ All paths relative to `/opt/continuum_plugins/continuum-plugin-support/`.
 - [ ] **Step 1: Write the up migration**
 
 ```bash
-cd /opt/continuum_plugins/continuum-plugin-support
+cd /opt/silo_plugins/silo-plugin-support
 cat > internal/migrate/files/0004_tickets_init.up.sql <<'EOF'
 CREATE TABLE tk_categories (
     id          BIGSERIAL PRIMARY KEY,
@@ -1168,7 +1168,7 @@ The transition map is the single source of truth for what's allowed. Handlers co
 - [ ] **Step 1: Failing tests**
 
 ```bash
-cd /opt/continuum_plugins/continuum-plugin-support
+cd /opt/silo_plugins/silo-plugin-support
 mkdir -p internal/tickets
 cat > internal/tickets/lifecycle_test.go <<'EOF'
 package tickets
@@ -1359,7 +1359,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/RXWatcher/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/silo-plugin-support/internal/store"
 )
 
 type fakeStore struct {
@@ -1476,7 +1476,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/RXWatcher/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/silo-plugin-support/internal/store"
 )
 
 // CronStore is the slice of *store.Store the cron needs.
@@ -1565,7 +1565,7 @@ git -c user.name="Claude Code" -c user.email="noreply@anthropic.com" \
 This file covers the customer surface: SPA shells (list + detail), categories form lookup, ticket create / list / detail / reply / reopen. The attachment upload is its own handler (Phase G).
 
 ```bash
-cd /opt/continuum_plugins/continuum-plugin-support
+cd /opt/silo_plugins/silo-plugin-support
 cat > internal/server/handlers_tk_customer.go <<'EOF'
 package server
 
@@ -1577,8 +1577,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/RXWatcher/continuum-plugin-support/internal/store"
-	"github.com/RXWatcher/continuum-plugin-support/internal/tickets"
+	"github.com/RXWatcher/silo-plugin-support/internal/store"
+	"github.com/RXWatcher/silo-plugin-support/internal/tickets"
 )
 
 func tkCustomerStore(d Deps) *store.Store {
@@ -1594,8 +1594,8 @@ func hTKListPage(d Deps) http.HandlerFunc {
 		writeSPA(w, r, supportBootstrap{
 			Mode: "tickets-list", Theme: adminTheme(r),
 			Modules: currentModules(r.Context(), d),
-			UserID:  r.Header.Get("X-Continuum-User-Id"),
-			IsAdmin: r.Header.Get("X-Continuum-User-Role") == "admin",
+			UserID:  r.Header.Get("X-Silo-User-Id"),
+			IsAdmin: r.Header.Get("X-Silo-User-Role") == "admin",
 		}, http.StatusOK)
 	}
 }
@@ -1605,8 +1605,8 @@ func hTKDetailPage(d Deps) http.HandlerFunc {
 		writeSPA(w, r, supportBootstrap{
 			Mode: "tickets-detail", Theme: adminTheme(r),
 			Modules: currentModules(r.Context(), d),
-			UserID:  r.Header.Get("X-Continuum-User-Id"),
-			IsAdmin: r.Header.Get("X-Continuum-User-Role") == "admin",
+			UserID:  r.Header.Get("X-Silo-User-Id"),
+			IsAdmin: r.Header.Get("X-Silo-User-Role") == "admin",
 		}, http.StatusOK)
 	}
 }
@@ -1646,7 +1646,7 @@ func hTKCategoriesForCustomer(d Deps) http.HandlerFunc {
 func hTKCustomerList(d Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		f := store.TKTicketListFilter{
-			CustomerID:  r.Header.Get("X-Continuum-User-Id"),
+			CustomerID:  r.Header.Get("X-Silo-User-Id"),
 			StatusGroup: r.URL.Query().Get("statusGroup"),
 			Limit:       parseLimit(r.URL.Query().Get("limit"), 100),
 			Offset:      parseInt(r.URL.Query().Get("offset")),
@@ -1677,7 +1677,7 @@ func hTKCustomerDetail(d Deps) http.HandlerFunc {
 		if err != nil {
 			writeInternal(w, r, d, "tk_detail_failed", err); return
 		}
-		if t.CustomerID != r.Header.Get("X-Continuum-User-Id") {
+		if t.CustomerID != r.Header.Get("X-Silo-User-Id") {
 			writeErr(w, http.StatusNotFound, "tk_not_found", "ticket not found"); return
 		}
 		if err := st.TKLoadTicketAux(r.Context(), &t); err != nil {
@@ -1741,7 +1741,7 @@ func hTKCustomerCreate(d Deps) http.HandlerFunc {
 
 		saved, err := st.TKCreateTicket(r.Context(), tx, store.TKTicket{
 			TrackingNumber: tn,
-			CustomerID:     r.Header.Get("X-Continuum-User-Id"),
+			CustomerID:     r.Header.Get("X-Silo-User-Id"),
 			CustomerEmail:  req.CustomerEmail,
 			CategoryID:     req.CategoryID,
 			SubcategoryID:  req.SubcategoryID,
@@ -1798,7 +1798,7 @@ func hTKCustomerReply(d Deps) http.HandlerFunc {
 		if err != nil {
 			writeInternal(w, r, d, "tk_reply_failed", err); return
 		}
-		if t.CustomerID != r.Header.Get("X-Continuum-User-Id") {
+		if t.CustomerID != r.Header.Get("X-Silo-User-Id") {
 			writeErr(w, http.StatusNotFound, "tk_not_found", "ticket not found"); return
 		}
 		if t.Status == "closed" {
@@ -1856,7 +1856,7 @@ func hTKCustomerReopen(d Deps) http.HandlerFunc {
 		if err != nil {
 			writeInternal(w, r, d, "tk_reopen_failed", err); return
 		}
-		if t.CustomerID != r.Header.Get("X-Continuum-User-Id") {
+		if t.CustomerID != r.Header.Get("X-Silo-User-Id") {
 			writeErr(w, http.StatusNotFound, "tk_not_found", "ticket not found"); return
 		}
 		if err := tickets.AllowTransition(t.Status, "in_progress", tickets.TriggerCustomerReopen, timeNow()); err != nil {
@@ -1908,7 +1908,7 @@ package server
 import (
 	"context"
 
-	"github.com/RXWatcher/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/silo-plugin-support/internal/store"
 )
 
 // tkPublishEvent assembles the base ticket payload + extra keys and
@@ -1941,7 +1941,7 @@ func tkPublishEvent(d Deps, name string, t store.TKTicket, extra map[string]any)
 		payload[k] = v
 	}
 	if err := d.EventPublisher.PublishEvent(context.Background(),
-		"plugin.continuum.support."+name, payload); err != nil && d.Logger != nil {
+		"plugin.silo.support."+name, payload); err != nil && d.Logger != nil {
 		d.Logger.Warn("ticket event publish failed", "event", name, "err", err)
 	}
 }
@@ -1978,8 +1978,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/RXWatcher/continuum-plugin-support/internal/store"
-	"github.com/RXWatcher/continuum-plugin-support/internal/tickets"
+	"github.com/RXWatcher/silo-plugin-support/internal/store"
+	"github.com/RXWatcher/silo-plugin-support/internal/tickets"
 )
 
 func tkAdminStore(d Deps) *store.Store {
@@ -2003,7 +2003,7 @@ func hTKAdminQueue(d Deps) http.HandlerFunc {
 			StatusGroup:   r.URL.Query().Get("statusGroup"),
 			CategoryID:    parseInt64(r.URL.Query().Get("categoryId")),
 			AssigneeID:    r.URL.Query().Get("assignee"),
-			CallerAdminID: r.Header.Get("X-Continuum-User-Id"),
+			CallerAdminID: r.Header.Get("X-Silo-User-Id"),
 			Search:        r.URL.Query().Get("q"),
 			Limit:         parseLimit(r.URL.Query().Get("limit"), 200),
 			Offset:        parseInt(r.URL.Query().Get("offset")),
@@ -2063,7 +2063,7 @@ func hTKAdminReply(d Deps) http.HandlerFunc {
 		if strings.TrimSpace(req.Body) == "" {
 			writeErr(w, http.StatusBadRequest, "tk_empty_body", "reply body cannot be empty"); return
 		}
-		adminID := r.Header.Get("X-Continuum-User-Id")
+		adminID := r.Header.Get("X-Silo-User-Id")
 		entry, err := st.TKInsertEntryNoTx(r.Context(), store.TKEntry{
 			TicketID: t.ID, Kind: "reply", AuthorID: adminID, AuthorRole: "admin", Body: req.Body,
 		})
@@ -2111,7 +2111,7 @@ func hTKAdminNote(d Deps) http.HandlerFunc {
 		}
 		entry, err := st.TKInsertEntryNoTx(r.Context(), store.TKEntry{
 			TicketID: t.ID, Kind: "internal_note",
-			AuthorID: r.Header.Get("X-Continuum-User-Id"), AuthorRole: "admin", Body: req.Body,
+			AuthorID: r.Header.Get("X-Silo-User-Id"), AuthorRole: "admin", Body: req.Body,
 		})
 		if err != nil {
 			writeInternal(w, r, d, "tk_note_failed", err); return
@@ -2140,7 +2140,7 @@ func hTKAdminStatus(d Deps) http.HandlerFunc {
 		if err := tickets.AllowTransition(t.Status, req.To, tickets.TriggerAdminStatus, timeNow()); err != nil {
 			writeErr(w, http.StatusConflict, "tk_bad_transition", err.Error()); return
 		}
-		adminID := r.Header.Get("X-Continuum-User-Id")
+		adminID := r.Header.Get("X-Silo-User-Id")
 		updated, err := st.TKUpdateTicketStatus(r.Context(), t.ID, req.To, nil, nil)
 		if err != nil {
 			writeInternal(w, r, d, "tk_status_failed", err); return
@@ -2466,7 +2466,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/RXWatcher/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/silo-plugin-support/internal/store"
 )
 
 const tkAttachmentMaxBytes = 10 << 20 // 10 MB
@@ -2489,12 +2489,12 @@ func hTKUploadAttachment(d Deps) http.HandlerFunc {
 			writeInternal(w, r, d, "tk_entry_get_failed", err); return
 		}
 		// Authorize: customer who owns the parent ticket OR admin.
-		if r.Header.Get("X-Continuum-User-Role") != "admin" {
+		if r.Header.Get("X-Silo-User-Role") != "admin" {
 			ticket, err := st.TKGetTicketByID(r.Context(), entry.TicketID)
 			if err != nil {
 				writeInternal(w, r, d, "tk_ticket_get_failed", err); return
 			}
-			if ticket.CustomerID != r.Header.Get("X-Continuum-User-Id") {
+			if ticket.CustomerID != r.Header.Get("X-Silo-User-Id") {
 				writeErr(w, http.StatusForbidden, "tk_forbidden", "not your ticket"); return
 			}
 		}
@@ -2555,7 +2555,7 @@ func hTKServeAttachment(d Deps) http.HandlerFunc {
 			writeInternal(w, r, d, "tk_attachment_get_failed", err); return
 		}
 		// Same auth gate as upload.
-		if r.Header.Get("X-Continuum-User-Role") != "admin" {
+		if r.Header.Get("X-Silo-User-Role") != "admin" {
 			entry, err := st.TKGetEntry(r.Context(), att.EntryID)
 			if err != nil {
 				writeInternal(w, r, d, "tk_entry_get_failed", err); return
@@ -2564,7 +2564,7 @@ func hTKServeAttachment(d Deps) http.HandlerFunc {
 			if err != nil {
 				writeInternal(w, r, d, "tk_ticket_get_failed", err); return
 			}
-			if ticket.CustomerID != r.Header.Get("X-Continuum-User-Id") {
+			if ticket.CustomerID != r.Header.Get("X-Silo-User-Id") {
 				http.NotFound(w, r); return  // don't leak existence
 			}
 		}
@@ -2604,7 +2604,7 @@ git -c user.name="Claude Code" -c user.email="noreply@anthropic.com" \
 ### Task H1: All wiring in one commit
 
 ```bash
-cd /opt/continuum_plugins/continuum-plugin-support
+cd /opt/silo_plugins/silo-plugin-support
 ```
 
 ### H1.1 — Register tk routes in `internal/server/server.go`
@@ -2678,7 +2678,7 @@ Bump `version` to `0.4.0`. Append (preserving prior entries):
 
 ### H1.3 — main.go wiring
 
-Edit `cmd/continuum-plugin-support/main.go`. Update the `httpSrv.SetHandler(server.New(server.Deps{...}))` call to pass the three new tickets fields:
+Edit `cmd/silo-plugin-support/main.go`. Update the `httpSrv.SetHandler(server.New(server.Deps{...}))` call to pass the three new tickets fields:
 
 ```go
 	httpSrv.SetHandler(server.New(server.Deps{
@@ -2748,7 +2748,7 @@ go build ./...
 go test ./...
 GOWORK=off go build ./...
 git -c user.name="Claude Code" -c user.email="noreply@anthropic.com" \
-  add internal/server/server.go cmd/continuum-plugin-support/manifest.json cmd/continuum-plugin-support/main.go internal/runtime/runtime.go internal/runtime/runtime_test.go
+  add internal/server/server.go cmd/silo-plugin-support/manifest.json cmd/silo-plugin-support/main.go internal/runtime/runtime.go internal/runtime/runtime_test.go
 git -c user.name="Claude Code" -c user.email="noreply@anthropic.com" \
   commit -m "feat: wire tickets routes + main.go + manifest 0.4.0 + Modules.Tickets default true"
 ```
@@ -2778,8 +2778,8 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/RXWatcher/continuum-plugin-support/internal/migrate"
-	"github.com/RXWatcher/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/silo-plugin-support/internal/migrate"
+	"github.com/RXWatcher/silo-plugin-support/internal/store"
 )
 
 func tkTestDeps(t *testing.T) (Deps, *store.Store, func()) {
@@ -2819,7 +2819,7 @@ func TestTKAdminRoutesRejectNonAdmin(t *testing.T) {
 	h := New(d)
 	for _, path := range []string{"/admin/tickets", "/api/admin/tickets", "/api/admin/categories"} {
 		req := httptest.NewRequest(http.MethodGet, path, nil)
-		req.Header.Set("X-Continuum-User-Id", "42")
+		req.Header.Set("X-Silo-User-Id", "42")
 		rec := httptest.NewRecorder()
 		h.ServeHTTP(rec, req)
 		if rec.Code != http.StatusForbidden {
@@ -2840,7 +2840,7 @@ func TestTKCustomerCreateAndDetailRoundTrip(t *testing.T) {
 
 	body := fmt.Sprintf(`{"categoryId":%d,"subject":"hello","body":"world","customerEmail":"a@b"}`, cat.ID)
 	req := httptest.NewRequest(http.MethodPost, "/api/customer/tickets", bytes.NewBufferString(body))
-	req.Header.Set("X-Continuum-User-Id", "42")
+	req.Header.Set("X-Silo-User-Id", "42")
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {
@@ -2854,7 +2854,7 @@ func TestTKCustomerCreateAndDetailRoundTrip(t *testing.T) {
 
 	// Detail (owner)
 	req = httptest.NewRequest(http.MethodGet, "/api/customer/tickets/"+created.TrackingNumber, nil)
-	req.Header.Set("X-Continuum-User-Id", "42")
+	req.Header.Set("X-Silo-User-Id", "42")
 	rec = httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {
@@ -2863,7 +2863,7 @@ func TestTKCustomerCreateAndDetailRoundTrip(t *testing.T) {
 
 	// Detail (different customer → 404, not 403; spec: don't leak existence)
 	req = httptest.NewRequest(http.MethodGet, "/api/customer/tickets/"+created.TrackingNumber, nil)
-	req.Header.Set("X-Continuum-User-Id", "99")
+	req.Header.Set("X-Silo-User-Id", "99")
 	rec = httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	if rec.Code != http.StatusNotFound {
@@ -2881,7 +2881,7 @@ func TestTKAdminLifecycle(t *testing.T) {
 	// Customer creates
 	body := fmt.Sprintf(`{"categoryId":%d,"subject":"lifecycle","body":"start","customerEmail":"c@d"}`, cat.ID)
 	req := httptest.NewRequest(http.MethodPost, "/api/customer/tickets", bytes.NewBufferString(body))
-	req.Header.Set("X-Continuum-User-Id", "100")
+	req.Header.Set("X-Silo-User-Id", "100")
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	var created store.TKTicket
@@ -2891,8 +2891,8 @@ func TestTKAdminLifecycle(t *testing.T) {
 	// Admin reply -> open -> in_progress
 	req = httptest.NewRequest(http.MethodPost, "/api/admin/tickets/"+tn+"/reply",
 		bytes.NewBufferString(`{"body":"hi"}`))
-	req.Header.Set("X-Continuum-User-Id", "1")
-	req.Header.Set("X-Continuum-User-Role", "admin")
+	req.Header.Set("X-Silo-User-Id", "1")
+	req.Header.Set("X-Silo-User-Role", "admin")
 	rec = httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK { t.Fatalf("admin reply: %d %s", rec.Code, rec.Body.String()) }
@@ -2900,15 +2900,15 @@ func TestTKAdminLifecycle(t *testing.T) {
 	// Admin mark resolved
 	req = httptest.NewRequest(http.MethodPost, "/api/admin/tickets/"+tn+"/status",
 		bytes.NewBufferString(`{"to":"resolved"}`))
-	req.Header.Set("X-Continuum-User-Id", "1")
-	req.Header.Set("X-Continuum-User-Role", "admin")
+	req.Header.Set("X-Silo-User-Id", "1")
+	req.Header.Set("X-Silo-User-Role", "admin")
 	rec = httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK { t.Fatalf("admin resolve: %d %s", rec.Code, rec.Body.String()) }
 
 	// Customer reopens
 	req = httptest.NewRequest(http.MethodPost, "/api/customer/tickets/"+tn+"/reopen", nil)
-	req.Header.Set("X-Continuum-User-Id", "100")
+	req.Header.Set("X-Silo-User-Id", "100")
 	rec = httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK { t.Fatalf("reopen: %d %s", rec.Code, rec.Body.String()) }
@@ -2925,7 +2925,7 @@ func TestTKAttachmentTooLargeReturns413(t *testing.T) {
 	body.Write(big)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/tickets/entries/1/attachments", body)
-	req.Header.Set("X-Continuum-User-Id", "1")
+	req.Header.Set("X-Silo-User-Id", "1")
 	req.Header.Set("Content-Type", "multipart/form-data; boundary=BOUNDARY")
 	req.ContentLength = int64(body.Len())
 	rec := httptest.NewRecorder()
@@ -3021,7 +3021,7 @@ Extend `SupportBootstrap.mode` to add 5 new modes (`tickets-list`, `tickets-new`
 Verify + commit:
 
 ```bash
-cd /opt/continuum_plugins/continuum-plugin-support
+cd /opt/silo_plugins/silo-plugin-support
 cd web && pnpm test && pnpm exec tsc -b --noEmit && cd ..
 git -c user.name="Claude Code" -c user.email="noreply@anthropic.com" \
   add web/src/lib/types.ts
@@ -3212,7 +3212,7 @@ git -c user.name="Claude Code" -c user.email="noreply@anthropic.com" \
 - Create: `web/src/components/tk/*` (5 files)
 
 ```bash
-cd /opt/continuum_plugins/continuum-plugin-support
+cd /opt/silo_plugins/silo-plugin-support
 mkdir -p web/src/components/tk
 
 cat > web/src/components/tk/StatusBadge.tsx <<'EOF'
@@ -4195,7 +4195,7 @@ git -c user.name="Claude Code" -c user.email="noreply@anthropic.com" \
 ### Task N1: App.tsx dispatcher for new modes
 
 ```bash
-cd /opt/continuum_plugins/continuum-plugin-support
+cd /opt/silo_plugins/silo-plugin-support
 cat > web/src/App.tsx <<'EOF'
 import type { ReactNode } from "react";
 import { Toaster } from "@/components/ui/sonner";
@@ -4282,8 +4282,8 @@ func hTKNewPage(d Deps) http.HandlerFunc {
 		writeSPA(w, r, supportBootstrap{
 			Mode: "tickets-new", Theme: adminTheme(r),
 			Modules: currentModules(r.Context(), d),
-			UserID:  r.Header.Get("X-Continuum-User-Id"),
-			IsAdmin: r.Header.Get("X-Continuum-User-Role") == "admin",
+			UserID:  r.Header.Get("X-Silo-User-Id"),
+			IsAdmin: r.Header.Get("X-Silo-User-Role") == "admin",
 		}, http.StatusOK)
 	}
 }
@@ -4310,10 +4310,10 @@ grep 'tickets:' web/src/lib/modules.ts
 
 ```bash
 cat > README.md <<'EOF'
-# Continuum Support Plugin
+# Silo Support Plugin
 
-`continuum.support` is the customer-facing support surface for a
-Continuum deployment.
+`silo.support` is the customer-facing support surface for a
+Silo deployment.
 
 **Shipped modules:**
 
@@ -4341,14 +4341,14 @@ skip cleanly.
 ## Configuration
 
 Requires `database_url` — a Postgres DSN, e.g.
-`postgres://plugin_support:...@host:5432/continuum?search_path=support&sslmode=disable`.
+`postgres://plugin_support:...@host:5432/silo?search_path=support&sslmode=disable`.
 
 Speedtest-related config keys (all optional, sane defaults):
 
 - `auto_strategy` — `latency` (default) or `geoip`
 - `client_ip_storage` — `truncated` (default) or `off`
 - `slow_threshold_mbps` — default `5`
-- `geoip_cache_dir` — default `$XDG_CACHE_HOME/continuum-plugin-support/geoip/`
+- `geoip_cache_dir` — default `$XDG_CACHE_HOME/silo-plugin-support/geoip/`
 
 Tickets-related config keys:
 
@@ -4358,7 +4358,7 @@ Tickets-related config keys:
 
 ## Events emitted
 
-Routed via the existing `continuum.notifications` plugin per admin rules.
+Routed via the existing `silo.notifications` plugin per admin rules.
 
 **KB:** `kb_article_published / _updated / _unhelpful`
 **Speedtest:** `speedtest_run / _slow`

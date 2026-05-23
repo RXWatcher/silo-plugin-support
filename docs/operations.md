@@ -22,7 +22,7 @@ crons, enable / disable modules, audit data.
    `search_path`:
 
    ```
-   postgres://plugin_support:...@host:5432/continuum?search_path=support&sslmode=disable
+   postgres://plugin_support:...@host:5432/silo?search_path=support&sslmode=disable
    ```
 
    On `Configure` the plugin opens a pgx pool, runs migrations
@@ -32,7 +32,7 @@ crons, enable / disable modules, audit data.
    / Tickets on; AI is left off until it ships.
 
 3. **Visit `/admin`.** The operator landing page (chi route
-   `GET /admin`) requires `X-Continuum-User-Role: admin`. The
+   `GET /admin`) requires `X-Silo-User-Role: admin`. The
    sidebar reflects `SHIPPED_MODULES ∩ enabled`. Configure each
    module from its admin section.
 
@@ -90,7 +90,7 @@ yet ship `scheduled_task.v1`. See
 
 The plugin is one Go binary plus an embedded SPA. The CI workflow
 at
-[RXWatcher/continuum-plugin-repository](https://github.com/RXWatcher/continuum-plugin-repository)
+[RXWatcher/silo-plugin-repository](https://github.com/RXWatcher/silo-plugin-repository)
 builds linux-amd64 on every push to main. The host downloads the
 new artefact and re-runs `Configure`.
 

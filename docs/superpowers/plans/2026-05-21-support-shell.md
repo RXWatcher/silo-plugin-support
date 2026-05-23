@@ -2,13 +2,13 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build the foundation of `continuum-plugin-support` — manifest, auth-gated routes, customer + admin SPA shells, migrations runner, `app_config` singleton — with no module business logic. Future modules (KB, Speedtest, Tickets, AI) land on top.
+**Goal:** Build the foundation of `silo-plugin-support` — manifest, auth-gated routes, customer + admin SPA shells, migrations runner, `app_config` singleton — with no module business logic. Future modules (KB, Speedtest, Tickets, AI) land on top.
 
-**Architecture:** Go binary + embedded React/TS SPA, served through the Continuum SDK's `HttpRoutes` capability (no standalone listener). Mirrors `continuum-plugin-public-catalog` exactly — same toolchain, same patterns. One Postgres schema (`support`) with `golang-migrate`-managed migrations; one singleton `app_config` table holding module toggles in JSONB.
+**Architecture:** Go binary + embedded React/TS SPA, served through the Silo SDK's `HttpRoutes` capability (no standalone listener). Mirrors `silo-plugin-public-catalog` exactly — same toolchain, same patterns. One Postgres schema (`support`) with `golang-migrate`-managed migrations; one singleton `app_config` table holding module toggles in JSONB.
 
 **Tech Stack:** Go 1.26, chi/v5, pgx/v5, golang-migrate, hashicorp/go-hclog, ContinuumApp/continuum-plugin-sdk v0.3.10. Frontend: React 19, TypeScript, Vite 8, Vitest 4, Tailwind v4, radix-ui 1.4, lucide-react, sonner. Package manager: pnpm.
 
-**Reference repo:** `/opt/continuum_plugins/continuum-plugin-public-catalog/` — when a task says "match public-catalog's `X`," the engineer should open that file and adapt. Strong preference: identical patterns reduce review burden.
+**Reference repo:** `/opt/silo_plugins/silo-plugin-public-catalog/` — when a task says "match public-catalog's `X`," the engineer should open that file and adapt. Strong preference: identical patterns reduce review burden.
 
 **Spec lineage:**
 - Program: [`../specs/2026-05-21-support-plugin-program-design.md`](../specs/2026-05-21-support-plugin-program-design.md)
@@ -18,19 +18,19 @@
 
 ## File Structure
 
-All paths relative to `/opt/continuum_plugins/continuum-plugin-support/`.
+All paths relative to `/opt/silo_plugins/silo-plugin-support/`.
 
 | File | Responsibility |
 |---|---|
-| `go.mod`, `go.sum` | Module path `github.com/RXWatcher/continuum-plugin-support`, deps match public-catalog |
+| `go.mod`, `go.sum` | Module path `github.com/RXWatcher/silo-plugin-support`, deps match public-catalog |
 | `Makefile` | `build` / `web-build` / `test` / `test-go` / `test-web` / `clean` |
 | `README.md` | One-paragraph overview, links to spec docs |
 | `.gitignore` | Built binary, web/node_modules, web/dist, web/*.tsbuildinfo, web/vite.config.{js,d.ts}, internal/server/public/dist |
-| `cmd/continuum-plugin-support/main.go` | Entry point: load manifest, build server, hand off to SDK |
-| `cmd/continuum-plugin-support/manifest.json` | Plugin manifest — routes + global_config_schema |
+| `cmd/silo-plugin-support/main.go` | Entry point: load manifest, build server, hand off to SDK |
+| `cmd/silo-plugin-support/manifest.json` | Plugin manifest — routes + global_config_schema |
 | `internal/runtime/runtime.go` | Plugin SDK `runtime.Server`: Configure RPC, Config struct, normalization |
 | `internal/runtime/runtime_test.go` | Configure roundtrip + validation tests |
-| `internal/httproutes/server.go` | SDK `HttpRoutes` shim — strips `X-Continuum-*` on `ServeHTTP`, forwards to wrapped handler |
+| `internal/httproutes/server.go` | SDK `HttpRoutes` shim — strips `X-Silo-*` on `ServeHTTP`, forwards to wrapped handler |
 | `internal/server/server.go` | chi router + `Deps` + `New(Deps) http.Handler` |
 | `internal/server/middleware.go` | `securityHeaders`, `requireUser`, `requireAdmin` |
 | `internal/server/response.go` | `writeJSON`, `writeErr`, `writeInternal` |
@@ -85,14 +85,14 @@ All paths relative to `/opt/continuum_plugins/continuum-plugin-support/`.
 
 **Files:**
 - Create: `go.mod`
-- Modify: `/opt/continuum_plugins/go.work`
+- Modify: `/opt/silo_plugins/go.work`
 
 - [ ] **Step 1: Create go.mod**
 
 ```bash
-cd /opt/continuum_plugins/continuum-plugin-support
+cd /opt/silo_plugins/silo-plugin-support
 cat > go.mod <<'EOF'
-module github.com/RXWatcher/continuum-plugin-support
+module github.com/RXWatcher/silo-plugin-support
 
 go 1.26.0
 
@@ -109,12 +109,12 @@ EOF
 
 - [ ] **Step 2: Add to workspace**
 
-Append `./continuum-plugin-support` to `/opt/continuum_plugins/go.work`'s `use ( ... )` block, keeping alphabetical order (between `stream-dashboard` and `whmcs-login`).
+Append `./silo-plugin-support` to `/opt/silo_plugins/go.work`'s `use ( ... )` block, keeping alphabetical order (between `stream-dashboard` and `whmcs-login`).
 
 - [ ] **Step 3: Resolve deps**
 
 ```bash
-cd /opt/continuum_plugins/continuum-plugin-support
+cd /opt/silo_plugins/silo-plugin-support
 go mod tidy
 ```
 
@@ -134,18 +134,18 @@ git commit -m "chore: initialize go.mod for support plugin"
 ### Task A2: Create manifest.json
 
 **Files:**
-- Create: `cmd/continuum-plugin-support/manifest.json`
+- Create: `cmd/silo-plugin-support/manifest.json`
 
 - [ ] **Step 1: Write the manifest**
 
 ```bash
-mkdir -p cmd/continuum-plugin-support
-cat > cmd/continuum-plugin-support/manifest.json <<'EOF'
+mkdir -p cmd/silo-plugin-support
+cat > cmd/silo-plugin-support/manifest.json <<'EOF'
 {
-  "plugin_id": "continuum.support",
+  "plugin_id": "silo.support",
   "version": "0.1.0",
   "checksum": "__CHECKSUM__",
-  "continuum_api_version": "v1",
+  "silo_api_version": "v1",
   "category": "Operations",
   "supported_platforms": [
     { "os": "linux", "arch": "amd64" }
@@ -171,7 +171,7 @@ cat > cmd/continuum-plugin-support/manifest.json <<'EOF'
     {
       "key": "database_url",
       "title": "Postgres connection string",
-      "description": "DSN for the dedicated support schema (e.g. postgres://plugin_support:...@host:5432/continuum?search_path=support&sslmode=disable).",
+      "description": "DSN for the dedicated support schema (e.g. postgres://plugin_support:...@host:5432/silo?search_path=support&sslmode=disable).",
       "json_schema": "{\"type\":\"object\",\"properties\":{\"value\":{\"type\":\"string\"}},\"required\":[\"value\"]}",
       "required": true,
       "admin_form": {
@@ -189,7 +189,7 @@ EOF
 - [ ] **Step 2: Commit**
 
 ```bash
-git add cmd/continuum-plugin-support/manifest.json
+git add cmd/silo-plugin-support/manifest.json
 git commit -m "chore: add plugin manifest"
 ```
 
@@ -198,7 +198,7 @@ git commit -m "chore: add plugin manifest"
 ### Task A3: Skeleton main.go — load manifest, serve "not configured" until Configure RPC
 
 **Files:**
-- Create: `cmd/continuum-plugin-support/main.go`
+- Create: `cmd/silo-plugin-support/main.go`
 
 - [ ] **Step 1: Write the skeleton**
 
@@ -215,18 +215,18 @@ import (
 
 	"github.com/hashicorp/go-hclog"
 
-	pluginv1 "github.com/ContinuumApp/continuum-plugin-sdk/pkg/pluginproto/continuum/plugin/v1"
+	pluginv1 "github.com/ContinuumApp/continuum-plugin-sdk/pkg/pluginproto/silo/plugin/v1"
 	publicmanifest "github.com/ContinuumApp/continuum-plugin-sdk/pkg/pluginsdk/manifest"
 	sdkruntime "github.com/ContinuumApp/continuum-plugin-sdk/pkg/pluginsdk/runtime"
 
-	"github.com/RXWatcher/continuum-plugin-support/internal/httproutes"
+	"github.com/RXWatcher/silo-plugin-support/internal/httproutes"
 )
 
 //go:embed manifest.json
 var manifestRaw []byte
 
 func main() {
-	logger := hclog.New(&hclog.LoggerOptions{Name: "continuum-plugin-support"})
+	logger := hclog.New(&hclog.LoggerOptions{Name: "silo-plugin-support"})
 	manifest, err := loadManifest()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "load manifest: %v\n", err)
@@ -299,7 +299,7 @@ import (
 	"strings"
 	"sync/atomic"
 
-	pluginv1 "github.com/ContinuumApp/continuum-plugin-sdk/pkg/pluginproto/continuum/plugin/v1"
+	pluginv1 "github.com/ContinuumApp/continuum-plugin-sdk/pkg/pluginproto/silo/plugin/v1"
 )
 
 type Server struct {
@@ -326,7 +326,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	for k := range r.Header {
-		if strings.HasPrefix(strings.ToLower(k), "x-continuum-") {
+		if strings.HasPrefix(strings.ToLower(k), "x-silo-") {
 			r.Header.Del(k)
 		}
 	}
@@ -403,14 +403,14 @@ git commit -m "feat: bootstrap main.go and SDK http_routes shim"
 
 ```bash
 cat > Makefile <<'EOF'
-BINARY := continuum-plugin-support
+BINARY := silo-plugin-support
 GO ?= go
 PNPM ?= pnpm
 
 .PHONY: build web-deps web-build test test-go test-web clean
 
 build: web-build
-	$(GO) build -o $(BINARY) ./cmd/continuum-plugin-support
+	$(GO) build -o $(BINARY) ./cmd/silo-plugin-support
 
 web-deps:
 	cd web && $(PNPM) install --frozen-lockfile
@@ -436,7 +436,7 @@ EOF
 
 ```bash
 cat > .gitignore <<'EOF'
-/continuum-plugin-support
+/silo-plugin-support
 /web/node_modules
 /web/dist
 /web/*.tsbuildinfo
@@ -473,7 +473,7 @@ package runtime
 import (
 	"testing"
 
-	pluginv1 "github.com/ContinuumApp/continuum-plugin-sdk/pkg/pluginproto/continuum/plugin/v1"
+	pluginv1 "github.com/ContinuumApp/continuum-plugin-sdk/pkg/pluginproto/silo/plugin/v1"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
@@ -538,7 +538,7 @@ import (
 	"fmt"
 	"sync"
 
-	pluginv1 "github.com/ContinuumApp/continuum-plugin-sdk/pkg/pluginproto/continuum/plugin/v1"
+	pluginv1 "github.com/ContinuumApp/continuum-plugin-sdk/pkg/pluginproto/silo/plugin/v1"
 	"github.com/ContinuumApp/continuum-plugin-sdk/pkg/pluginsdk/runtimedefault"
 )
 
@@ -780,7 +780,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	pluginrt "github.com/RXWatcher/continuum-plugin-support/internal/runtime"
+	pluginrt "github.com/RXWatcher/silo-plugin-support/internal/runtime"
 )
 
 // GetConfig reads the singleton app_config row. Returns the
@@ -950,7 +950,7 @@ func TestRequireUserAllowsKnownIdentity(t *testing.T) {
 	called := false
 	h := requireUser(func(http.ResponseWriter, *http.Request) { called = true })
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	req.Header.Set("X-Continuum-User-Id", "42")
+	req.Header.Set("X-Silo-User-Id", "42")
 	rec := httptest.NewRecorder()
 	h(rec, req)
 	if !called {
@@ -962,8 +962,8 @@ func TestRequireAdminBlocksNonAdmin(t *testing.T) {
 	called := false
 	h := requireAdmin(func(http.ResponseWriter, *http.Request) { called = true })
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	req.Header.Set("X-Continuum-User-Id", "42")
-	req.Header.Set("X-Continuum-User-Role", "user")
+	req.Header.Set("X-Silo-User-Id", "42")
+	req.Header.Set("X-Silo-User-Role", "user")
 	rec := httptest.NewRecorder()
 	h(rec, req)
 	if rec.Code != http.StatusForbidden {
@@ -978,8 +978,8 @@ func TestRequireAdminAllowsAdmin(t *testing.T) {
 	called := false
 	h := requireAdmin(func(http.ResponseWriter, *http.Request) { called = true })
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	req.Header.Set("X-Continuum-User-Id", "1")
-	req.Header.Set("X-Continuum-User-Role", "admin")
+	req.Header.Set("X-Silo-User-Id", "1")
+	req.Header.Set("X-Silo-User-Role", "admin")
 	rec := httptest.NewRecorder()
 	h(rec, req)
 	if !called {
@@ -1030,7 +1030,7 @@ func securityHeaders(next http.Handler) http.Handler {
 
 func requireUser(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Header.Get("X-Continuum-User-Id") == "" {
+		if r.Header.Get("X-Silo-User-Id") == "" {
 			writeErr(w, http.StatusUnauthorized, "unauthenticated", "log in to continue")
 			return
 		}
@@ -1040,11 +1040,11 @@ func requireUser(next http.HandlerFunc) http.HandlerFunc {
 
 func requireAdmin(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Header.Get("X-Continuum-User-Id") == "" {
+		if r.Header.Get("X-Silo-User-Id") == "" {
 			writeErr(w, http.StatusUnauthorized, "unauthenticated", "admin login required")
 			return
 		}
-		if r.Header.Get("X-Continuum-User-Role") != "admin" {
+		if r.Header.Get("X-Silo-User-Role") != "admin" {
 			writeErr(w, http.StatusForbidden, "forbidden", "admin access required")
 			return
 		}
@@ -1078,7 +1078,7 @@ import (
 	"io/fs"
 	"net/http"
 
-	pluginrt "github.com/RXWatcher/continuum-plugin-support/internal/runtime"
+	pluginrt "github.com/RXWatcher/silo-plugin-support/internal/runtime"
 )
 
 //go:embed public/dist/* public/dist/assets/*
@@ -1130,10 +1130,10 @@ func writeSPA(w http.ResponseWriter, r *http.Request, bs supportBootstrap, statu
 func adminTheme(r *http.Request) string {
 	theme := r.URL.Query().Get("theme")
 	if theme == "" {
-		theme = r.Header.Get("X-Continuum-Theme")
+		theme = r.Header.Get("X-Silo-Theme")
 	}
 	if theme == "" {
-		theme = r.Header.Get("X-Continuum-User-Theme")
+		theme = r.Header.Get("X-Silo-User-Theme")
 	}
 	if theme == "" {
 		theme = "default"
@@ -1182,8 +1182,8 @@ func hCustomerHome(d Deps) http.HandlerFunc {
 			Mode:    "customer-home",
 			Theme:   adminTheme(r),
 			Modules: modules,
-			UserID:  r.Header.Get("X-Continuum-User-Id"),
-			IsAdmin: r.Header.Get("X-Continuum-User-Role") == "admin",
+			UserID:  r.Header.Get("X-Silo-User-Id"),
+			IsAdmin: r.Header.Get("X-Silo-User-Role") == "admin",
 		}, http.StatusOK)
 	}
 }
@@ -1193,8 +1193,8 @@ func hCustomerBootstrap(d Deps) http.HandlerFunc {
 		modules := currentModules(r.Context(), d)
 		writeJSON(w, http.StatusOK, map[string]any{
 			"modules": modules,
-			"userId":  r.Header.Get("X-Continuum-User-Id"),
-			"isAdmin": r.Header.Get("X-Continuum-User-Role") == "admin",
+			"userId":  r.Header.Get("X-Silo-User-Id"),
+			"isAdmin": r.Header.Get("X-Silo-User-Role") == "admin",
 		})
 	}
 }
@@ -1221,7 +1221,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	pluginrt "github.com/RXWatcher/continuum-plugin-support/internal/runtime"
+	pluginrt "github.com/RXWatcher/silo-plugin-support/internal/runtime"
 )
 
 func hAdminPage(d Deps) http.HandlerFunc {
@@ -1231,7 +1231,7 @@ func hAdminPage(d Deps) http.HandlerFunc {
 			Mode:    "admin-home",
 			Theme:   adminTheme(r),
 			Modules: modules,
-			UserID:  r.Header.Get("X-Continuum-User-Id"),
+			UserID:  r.Header.Get("X-Silo-User-Id"),
 			IsAdmin: true,
 		}, http.StatusOK)
 	}
@@ -1332,7 +1332,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/hashicorp/go-hclog"
 
-	pluginrt "github.com/RXWatcher/continuum-plugin-support/internal/runtime"
+	pluginrt "github.com/RXWatcher/silo-plugin-support/internal/runtime"
 )
 
 type ConfigStore interface {
@@ -1391,12 +1391,12 @@ git commit -m "feat(server): chi router, middleware, SPA + admin handlers"
 ### Task E2: Wire main.go to full server + Configure RPC
 
 **Files:**
-- Modify: `cmd/continuum-plugin-support/main.go`
+- Modify: `cmd/silo-plugin-support/main.go`
 
 - [ ] **Step 1: Replace skeleton with full wire-up**
 
 ```bash
-cat > cmd/continuum-plugin-support/main.go <<'EOF'
+cat > cmd/silo-plugin-support/main.go <<'EOF'
 package main
 
 import (
@@ -1412,22 +1412,22 @@ import (
 	"github.com/hashicorp/go-hclog"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	pluginv1 "github.com/ContinuumApp/continuum-plugin-sdk/pkg/pluginproto/continuum/plugin/v1"
+	pluginv1 "github.com/ContinuumApp/continuum-plugin-sdk/pkg/pluginproto/silo/plugin/v1"
 	publicmanifest "github.com/ContinuumApp/continuum-plugin-sdk/pkg/pluginsdk/manifest"
 	sdkruntime "github.com/ContinuumApp/continuum-plugin-sdk/pkg/pluginsdk/runtime"
 
-	"github.com/RXWatcher/continuum-plugin-support/internal/httproutes"
-	"github.com/RXWatcher/continuum-plugin-support/internal/migrate"
-	pluginrt "github.com/RXWatcher/continuum-plugin-support/internal/runtime"
-	"github.com/RXWatcher/continuum-plugin-support/internal/server"
-	"github.com/RXWatcher/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/silo-plugin-support/internal/httproutes"
+	"github.com/RXWatcher/silo-plugin-support/internal/migrate"
+	pluginrt "github.com/RXWatcher/silo-plugin-support/internal/runtime"
+	"github.com/RXWatcher/silo-plugin-support/internal/server"
+	"github.com/RXWatcher/silo-plugin-support/internal/store"
 )
 
 //go:embed manifest.json
 var manifestRaw []byte
 
 func main() {
-	logger := hclog.New(&hclog.LoggerOptions{Name: "continuum-plugin-support"})
+	logger := hclog.New(&hclog.LoggerOptions{Name: "silo-plugin-support"})
 	manifest, err := loadManifest()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "load manifest: %v\n", err)
@@ -1519,7 +1519,7 @@ Expected: all green.
 - [ ] **Step 3: Commit**
 
 ```bash
-git add cmd/continuum-plugin-support/main.go
+git add cmd/silo-plugin-support/main.go
 git commit -m "feat(main): wire applyConfig, migrate, store, server"
 ```
 
@@ -1639,7 +1639,7 @@ import (
 	"sync"
 	"testing"
 
-	pluginrt "github.com/RXWatcher/continuum-plugin-support/internal/runtime"
+	pluginrt "github.com/RXWatcher/silo-plugin-support/internal/runtime"
 )
 
 type fakeConfigStore struct {
@@ -1666,12 +1666,12 @@ func newTestDeps() (Deps, *fakeConfigStore) {
 }
 
 func adminHeaders(r *http.Request) {
-	r.Header.Set("X-Continuum-User-Id", "1")
-	r.Header.Set("X-Continuum-User-Role", "admin")
+	r.Header.Set("X-Silo-User-Id", "1")
+	r.Header.Set("X-Silo-User-Role", "admin")
 }
 
 func userHeaders(r *http.Request) {
-	r.Header.Set("X-Continuum-User-Id", "42")
+	r.Header.Set("X-Silo-User-Id", "42")
 }
 
 func TestCustomerHomeRequiresUserIdentity(t *testing.T) {
@@ -1798,7 +1798,7 @@ git commit -m "test(server): auth gates + config GET/PATCH coverage"
 mkdir -p web
 cat > web/package.json <<'EOF'
 {
-  "name": "continuum-plugin-support-web",
+  "name": "silo-plugin-support-web",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -1859,8 +1859,8 @@ git commit -m "chore(web): pnpm scaffolding"
 - [ ] **Step 1: Copy tsconfig files from public-catalog**
 
 ```bash
-cp /opt/continuum_plugins/continuum-plugin-public-catalog/web/tsconfig.json web/
-cp /opt/continuum_plugins/continuum-plugin-public-catalog/web/tsconfig.node.json web/
+cp /opt/silo_plugins/silo-plugin-public-catalog/web/tsconfig.json web/
+cp /opt/silo_plugins/silo-plugin-public-catalog/web/tsconfig.node.json web/
 ```
 
 - [ ] **Step 2: Write vite.config.ts**
@@ -1931,8 +1931,8 @@ git commit -m "chore(web): tsconfig + vite + index.html"
 
 ```bash
 mkdir -p web/src
-cp /opt/continuum_plugins/continuum-plugin-public-catalog/web/src/index.css web/src/
-cp /opt/continuum_plugins/continuum-plugin-public-catalog/web/src/vite-env.d.ts web/src/
+cp /opt/silo_plugins/silo-plugin-public-catalog/web/src/index.css web/src/
+cp /opt/silo_plugins/silo-plugin-public-catalog/web/src/vite-env.d.ts web/src/
 ```
 
 - [ ] **Step 2: Write main.tsx**
@@ -2132,10 +2132,10 @@ git commit -m "feat(web): bootstrap parser + types + testing-library setup"
 - [ ] **Step 1: Copy from public-catalog**
 
 ```bash
-cp /opt/continuum_plugins/continuum-plugin-public-catalog/web/src/lib/api.ts        web/src/lib/
-cp /opt/continuum_plugins/continuum-plugin-public-catalog/web/src/lib/authToken.ts  web/src/lib/
-cp /opt/continuum_plugins/continuum-plugin-public-catalog/web/src/lib/mountPath.ts  web/src/lib/
-cp /opt/continuum_plugins/continuum-plugin-public-catalog/web/src/lib/utils.ts      web/src/lib/
+cp /opt/silo_plugins/silo-plugin-public-catalog/web/src/lib/api.ts        web/src/lib/
+cp /opt/silo_plugins/silo-plugin-public-catalog/web/src/lib/authToken.ts  web/src/lib/
+cp /opt/silo_plugins/silo-plugin-public-catalog/web/src/lib/mountPath.ts  web/src/lib/
+cp /opt/silo_plugins/silo-plugin-public-catalog/web/src/lib/utils.ts      web/src/lib/
 ```
 
 - [ ] **Step 2: Verify TS compiles**
@@ -2270,9 +2270,9 @@ git commit -m "feat(web): ?section= URL state helpers"
 mkdir -p web/src/components/ui
 cd web/src/components/ui
 for f in button card switch label badge skeleton sonner input separator; do
-  cp "/opt/continuum_plugins/continuum-plugin-public-catalog/web/src/components/ui/${f}.tsx" "./${f}.tsx"
+  cp "/opt/silo_plugins/silo-plugin-public-catalog/web/src/components/ui/${f}.tsx" "./${f}.tsx"
 done
-cd /opt/continuum_plugins/continuum-plugin-support
+cd /opt/silo_plugins/silo-plugin-support
 ```
 
 - [ ] **Step 2: Verify TS compiles**
@@ -2303,10 +2303,10 @@ git commit -m "chore(web): shadcn primitives (copied from public-catalog)"
 
 ```bash
 mkdir -p web/src/components/shared
-cp /opt/continuum_plugins/continuum-plugin-public-catalog/web/src/components/shared/TopBar.tsx web/src/components/shared/TopBar.tsx
+cp /opt/silo_plugins/silo-plugin-public-catalog/web/src/components/shared/TopBar.tsx web/src/components/shared/TopBar.tsx
 ```
 
-Open the copied file and replace the brand string `"Continuum public catalog"` with `"Continuum support"`.
+Open the copied file and replace the brand string `"Silo public catalog"` with `"Silo support"`.
 
 - [ ] **Step 2: Commit**
 
@@ -3123,7 +3123,7 @@ git commit -m "feat(web): App mode dispatcher"
 make build
 ```
 
-Expected: SPA build + Go binary `./continuum-plugin-support` produced.
+Expected: SPA build + Go binary `./silo-plugin-support` produced.
 
 - [ ] **Step 2: Run `make test`**
 
@@ -3137,10 +3137,10 @@ Expected: Go tests + SPA tests pass.
 
 ```bash
 cat > README.md <<'EOF'
-# Continuum Support Plugin
+# Silo Support Plugin
 
-`continuum.support` is the customer-facing support surface for a
-Continuum deployment. The shell ships first; modules (Knowledge Base,
+`silo.support` is the customer-facing support surface for a
+Silo deployment. The shell ships first; modules (Knowledge Base,
 Speedtest, Tickets, AI Assistance) follow in their own releases.
 
 See `docs/superpowers/specs/` for designs and `docs/superpowers/plans/`
@@ -3156,7 +3156,7 @@ make test
 ## Configuration
 
 Requires `database_url` — a Postgres DSN, e.g.
-`postgres://plugin_support:...@host:5432/continuum?search_path=support&sslmode=disable`.
+`postgres://plugin_support:...@host:5432/silo?search_path=support&sslmode=disable`.
 
 The plugin manages its own schema; the operator only needs to create
 the schema and grant connect rights.

@@ -16,7 +16,7 @@ func securityHeaders(next http.Handler) http.Handler {
 
 func requireUser(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Header.Get("X-Continuum-User-Id") == "" {
+		if r.Header.Get("X-Silo-User-Id") == "" {
 			writeErr(w, http.StatusUnauthorized, "unauthenticated", "log in to continue")
 			return
 		}
@@ -26,11 +26,11 @@ func requireUser(next http.HandlerFunc) http.HandlerFunc {
 
 func requireAdmin(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Header.Get("X-Continuum-User-Id") == "" {
+		if r.Header.Get("X-Silo-User-Id") == "" {
 			writeErr(w, http.StatusUnauthorized, "unauthenticated", "admin login required")
 			return
 		}
-		if r.Header.Get("X-Continuum-User-Role") != "admin" {
+		if r.Header.Get("X-Silo-User-Role") != "admin" {
 			writeErr(w, http.StatusForbidden, "forbidden", "admin access required")
 			return
 		}

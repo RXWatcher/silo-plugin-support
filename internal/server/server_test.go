@@ -9,7 +9,7 @@ import (
 	"sync"
 	"testing"
 
-	pluginrt "github.com/RXWatcher/continuum-plugin-support/internal/runtime"
+	pluginrt "github.com/RXWatcher/silo-plugin-support/internal/runtime"
 )
 
 type fakeConfigStore struct {
@@ -36,12 +36,12 @@ func newTestDeps() (Deps, *fakeConfigStore) {
 }
 
 func adminHeaders(r *http.Request) {
-	r.Header.Set("X-Continuum-User-Id", "1")
-	r.Header.Set("X-Continuum-User-Role", "admin")
+	r.Header.Set("X-Silo-User-Id", "1")
+	r.Header.Set("X-Silo-User-Role", "admin")
 }
 
 func userHeaders(r *http.Request) {
-	r.Header.Set("X-Continuum-User-Id", "42")
+	r.Header.Set("X-Silo-User-Id", "42")
 }
 
 func TestCustomerHomeRequiresUserIdentity(t *testing.T) {

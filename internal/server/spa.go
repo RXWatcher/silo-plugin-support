@@ -8,7 +8,7 @@ import (
 	"io/fs"
 	"net/http"
 
-	pluginrt "github.com/RXWatcher/continuum-plugin-support/internal/runtime"
+	pluginrt "github.com/RXWatcher/silo-plugin-support/internal/runtime"
 )
 
 //go:embed public/dist/*
@@ -60,10 +60,10 @@ func writeSPA(w http.ResponseWriter, r *http.Request, bs supportBootstrap, statu
 func adminTheme(r *http.Request) string {
 	theme := r.URL.Query().Get("theme")
 	if theme == "" {
-		theme = r.Header.Get("X-Continuum-Theme")
+		theme = r.Header.Get("X-Silo-Theme")
 	}
 	if theme == "" {
-		theme = r.Header.Get("X-Continuum-User-Theme")
+		theme = r.Header.Get("X-Silo-User-Theme")
 	}
 	if theme == "" {
 		theme = "default"

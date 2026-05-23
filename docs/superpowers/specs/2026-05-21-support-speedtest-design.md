@@ -357,10 +357,10 @@ Base payload: `customer_id`, `endpoint_id`, `endpoint_label`,
 
 | Event | Extra keys | When |
 |---|---|---|
-| `plugin.continuum.support.speedtest_run` | — | Every completed test |
-| `plugin.continuum.support.speedtest_slow` | `threshold_mbps`, `slow_by_mbps` | `download_mbps` < `slow_threshold_mbps` |
+| `plugin.silo.support.speedtest_run` | — | Every completed test |
+| `plugin.silo.support.speedtest_slow` | `threshold_mbps`, `slow_by_mbps` | `download_mbps` < `slow_threshold_mbps` |
 
-Both routed via the existing `continuum.notifications` plugin per
+Both routed via the existing `silo.notifications` plugin per
 admin rules. No SMTP / push config in this module.
 
 ## SPA Bootstrap Modes
@@ -397,8 +397,8 @@ daily ticker (or cron trigger):
 
 Cache dir resolution:
 - `geoip_cache_dir` config key if set
-- else `$XDG_CACHE_HOME/continuum-plugin-support/geoip/`
-- else `~/.cache/continuum-plugin-support/geoip/`
+- else `$XDG_CACHE_HOME/silo-plugin-support/geoip/`
+- else `~/.cache/silo-plugin-support/geoip/`
 
 If the URL pattern's published month doesn't yet exist (db-ip.com
 publishes around the 1st), the downloader falls back to the previous

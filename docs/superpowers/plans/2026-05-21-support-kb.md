@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add the Knowledge Base module to `continuum-plugin-support` — operator-authored articles with Tiptap WYSIWYG + inline images, Postgres FTS + related articles, per-customer thumbs + view tracking, scheduled publishing, slug-based URLs, events out via the existing notifications plugin.
+**Goal:** Add the Knowledge Base module to `silo-plugin-support` — operator-authored articles with Tiptap WYSIWYG + inline images, Postgres FTS + related articles, per-customer thumbs + view tracking, scheduled publishing, slug-based URLs, events out via the existing notifications plugin.
 
 **Architecture:** Extends the support plugin shell (no new binary). Six new tables under the `support` schema. New routes added to the existing manifest. Body stored as sanitised HTML (Tiptap-native) with a derived `body_text` column powering FTS. SPA gains 6 new bootstrap modes; admin gets a Tiptap editor + taxonomy admin.
 
@@ -15,7 +15,7 @@
 
 ## File Structure
 
-All paths relative to `/opt/continuum_plugins/continuum-plugin-support/`.
+All paths relative to `/opt/silo_plugins/silo-plugin-support/`.
 
 ### Go side
 
@@ -40,8 +40,8 @@ All paths relative to `/opt/continuum_plugins/continuum-plugin-support/`.
 | `internal/server/server_test.go` | Auth-gate sweeps over new KB routes |
 | `internal/kb/cron.go` | PublishDue + UnhelpfulSweep |
 | `internal/kb/cron_test.go` | Cron logic tests |
-| `cmd/continuum-plugin-support/main.go` | Wire the cron (admin button fallback v1) |
-| `cmd/continuum-plugin-support/manifest.json` | Add KB http_routes + bump version to 0.2.0 |
+| `cmd/silo-plugin-support/main.go` | Wire the cron (admin button fallback v1) |
+| `cmd/silo-plugin-support/manifest.json` | Add KB http_routes + bump version to 0.2.0 |
 | `internal/runtime/runtime.go` | Flip `DefaultAppConfig().Modules.KB` to `true` |
 
 ### Web side
@@ -87,7 +87,7 @@ All paths relative to `/opt/continuum_plugins/continuum-plugin-support/`.
 - [ ] **Step 1: Write the up migration**
 
 ```bash
-cd /opt/continuum_plugins/continuum-plugin-support
+cd /opt/silo_plugins/silo-plugin-support
 cat > internal/migrate/files/0002_kb_init.up.sql <<'EOF'
 CREATE TABLE kb_categories (
     id          BIGSERIAL PRIMARY KEY,
@@ -1832,7 +1832,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/RXWatcher/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/silo-plugin-support/internal/store"
 )
 
 // hKBBrowsePage renders the customer SPA shell in browse mode.
@@ -1842,8 +1842,8 @@ func hKBBrowsePage(d Deps) http.HandlerFunc {
 			Mode:    "kb-browse",
 			Theme:   adminTheme(r),
 			Modules: currentModules(r.Context(), d),
-			UserID:  r.Header.Get("X-Continuum-User-Id"),
-			IsAdmin: r.Header.Get("X-Continuum-User-Role") == "admin",
+			UserID:  r.Header.Get("X-Silo-User-Id"),
+			IsAdmin: r.Header.Get("X-Silo-User-Role") == "admin",
 		}, http.StatusOK)
 	}
 }
@@ -1857,8 +1857,8 @@ func hKBDetailPage(d Deps) http.HandlerFunc {
 			Mode:    "kb-detail",
 			Theme:   adminTheme(r),
 			Modules: currentModules(r.Context(), d),
-			UserID:  r.Header.Get("X-Continuum-User-Id"),
-			IsAdmin: r.Header.Get("X-Continuum-User-Role") == "admin",
+			UserID:  r.Header.Get("X-Silo-User-Id"),
+			IsAdmin: r.Header.Get("X-Silo-User-Role") == "admin",
 		}, http.StatusOK)
 	}
 }
@@ -1905,7 +1905,7 @@ func hKBCustomerDetail(d Deps) http.HandlerFunc {
 		}
 		// Record view (best-effort — failure doesn't break the page).
 		_, _ = kbCustomerStore(d).KBRecordView(r.Context(), article.ID,
-			r.Header.Get("X-Continuum-User-Id"))
+			r.Header.Get("X-Silo-User-Id"))
 		writeJSON(w, http.StatusOK, article)
 	}
 }
@@ -1974,7 +1974,7 @@ func hKBCustomerVote(d Deps) http.HandlerFunc {
 			return
 		}
 		if err := kbCustomerStore(d).KBUpsertVote(r.Context(), article.ID,
-			r.Header.Get("X-Continuum-User-Id"), body.Vote); err != nil {
+			r.Header.Get("X-Silo-User-Id"), body.Vote); err != nil {
 			writeInternal(w, r, d, "kb_vote_failed", err)
 			return
 		}
@@ -2066,9 +2066,9 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/RXWatcher/continuum-plugin-support/internal/htmlx"
-	"github.com/RXWatcher/continuum-plugin-support/internal/kb"
-	"github.com/RXWatcher/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/silo-plugin-support/internal/htmlx"
+	"github.com/RXWatcher/silo-plugin-support/internal/kb"
+	"github.com/RXWatcher/silo-plugin-support/internal/store"
 )
 
 // hKBAdminListPage etc render the admin SPA shell with the right mode.
@@ -2094,7 +2094,7 @@ func adminSPAHandler(d Deps, mode string) http.HandlerFunc {
 			Mode:    mode,
 			Theme:   adminTheme(r),
 			Modules: currentModules(r.Context(), d),
-			UserID:  r.Header.Get("X-Continuum-User-Id"),
+			UserID:  r.Header.Get("X-Silo-User-Id"),
 			IsAdmin: true,
 		}, http.StatusOK)
 	}
@@ -2253,7 +2253,7 @@ func kbWriteArticle(w http.ResponseWriter, r *http.Request, d Deps, id int64) {
 		BodyText:     bodyText,
 		CategoryID:   req.CategoryID,
 		Status:       req.Status,
-		LastEditedBy: r.Header.Get("X-Continuum-User-Id"),
+		LastEditedBy: r.Header.Get("X-Silo-User-Id"),
 	}
 	if publishAt != nil {
 		ts, perr := parseTime(*publishAt)
@@ -2322,7 +2322,7 @@ func hKBAdminPublishArticle(d Deps) http.HandlerFunc {
 			return
 		}
 		saved, err := kbAdminStore(d).KBPublishArticle(r.Context(), id,
-			r.Header.Get("X-Continuum-User-Id"))
+			r.Header.Get("X-Silo-User-Id"))
 		if errors.Is(err, store.ErrNotFound) {
 			writeErr(w, http.StatusNotFound, "kb_not_found", "article not found")
 			return
@@ -2346,7 +2346,7 @@ func hKBAdminUnpublishArticle(d Deps) http.HandlerFunc {
 			return
 		}
 		saved, err := kbAdminStore(d).KBUnpublishArticle(r.Context(), id,
-			r.Header.Get("X-Continuum-User-Id"))
+			r.Header.Get("X-Silo-User-Id"))
 		if errors.Is(err, store.ErrNotFound) {
 			writeErr(w, http.StatusNotFound, "kb_not_found", "article not found")
 			return
@@ -2648,7 +2648,7 @@ For now stub the event call:
 cat > internal/server/kb_events.go <<'EOF'
 package server
 
-import "github.com/RXWatcher/continuum-plugin-support/internal/store"
+import "github.com/RXWatcher/silo-plugin-support/internal/store"
 
 // kbPublishEvent is the helper Phase G replaces with the real
 // host.PublishEvent call. Stubbed here so the admin handlers compile
@@ -2694,7 +2694,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/RXWatcher/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/silo-plugin-support/internal/store"
 )
 
 const kbImageMaxBytes = 5 << 20 // 5 MB
@@ -2897,7 +2897,7 @@ Plugins emit events via the SDK's `runtimehost.Client.PublishEvent(ctx, name, pa
 
 ```bash
 # Replace internal/server/server.go's Deps struct.
-cd /opt/continuum_plugins/continuum-plugin-support
+cd /opt/silo_plugins/silo-plugin-support
 ```
 
 Edit `internal/server/server.go` — locate the `Deps` struct (existing) and add an EventPublisher field:
@@ -2928,7 +2928,7 @@ package server
 import (
 	"context"
 
-	"github.com/RXWatcher/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/silo-plugin-support/internal/store"
 )
 
 // kbPublishEvent assembles the base payload + extra keys and hands
@@ -2956,7 +2956,7 @@ func kbPublishEvent(d Deps, name string, a store.KBArticle, extra map[string]any
 		payload[k] = v
 	}
 	if err := d.EventPublisher.PublishEvent(context.Background(),
-		"plugin.continuum.support."+name, payload); err != nil && d.Logger != nil {
+		"plugin.silo.support."+name, payload); err != nil && d.Logger != nil {
 		d.Logger.Warn("kb event publish failed", "event", name, "err", err)
 	}
 }
@@ -2973,7 +2973,7 @@ EOF
 
 - [ ] **Step 3: Wire the SDK publisher in main.go**
 
-Edit `cmd/continuum-plugin-support/main.go`. Inside `applyConfig`, where the server.Deps is built, add the EventPublisher:
+Edit `cmd/silo-plugin-support/main.go`. Inside `applyConfig`, where the server.Deps is built, add the EventPublisher:
 
 ```go
 import (
@@ -3005,7 +3005,7 @@ go test ./...
 
 ```bash
 git -c user.name="Claude Code" -c user.email="noreply@anthropic.com" \
-  add internal/server/server.go internal/server/kb_events.go cmd/continuum-plugin-support/main.go
+  add internal/server/server.go internal/server/kb_events.go cmd/silo-plugin-support/main.go
 git -c user.name="Claude Code" -c user.email="noreply@anthropic.com" \
   commit -m "feat(server): kb event publishing via runtimehost"
 ```
@@ -3031,7 +3031,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/RXWatcher/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/silo-plugin-support/internal/store"
 )
 
 // fakeStore is a hand-rolled minimal stand-in covering only the
@@ -3139,7 +3139,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/RXWatcher/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/silo-plugin-support/internal/store"
 )
 
 // CronStore is the subset of store.Store the cron needs. Captured
@@ -3293,7 +3293,7 @@ git -c user.name="Claude Code" -c user.email="noreply@anthropic.com" \
 
 **Files:**
 - Modify: `internal/server/server.go`
-- Modify: `cmd/continuum-plugin-support/manifest.json`
+- Modify: `cmd/silo-plugin-support/manifest.json`
 
 - [ ] **Step 1: Add KB routes to the chi router**
 
@@ -3348,7 +3348,7 @@ go build ./...
 
 - [ ] **Step 3: Update manifest.json**
 
-Edit `cmd/continuum-plugin-support/manifest.json`. Bump `version` from `0.1.0` to `0.2.0`. Append to the `http_routes` array (preserving the existing five):
+Edit `cmd/silo-plugin-support/manifest.json`. Bump `version` from `0.1.0` to `0.2.0`. Append to the `http_routes` array (preserving the existing five):
 
 ```json
     { "id": "kb_browse",       "method": "GET",  "path": "/kb",                                 "access": "user" },
@@ -3370,7 +3370,7 @@ Edit `cmd/continuum-plugin-support/manifest.json`. Bump `version` from `0.1.0` t
 
 ```bash
 git -c user.name="Claude Code" -c user.email="noreply@anthropic.com" \
-  add internal/server/server.go cmd/continuum-plugin-support/manifest.json
+  add internal/server/server.go cmd/silo-plugin-support/manifest.json
 git -c user.name="Claude Code" -c user.email="noreply@anthropic.com" \
   commit -m "feat(server): wire kb routes + bump manifest to 0.2.0"
 ```
@@ -3404,8 +3404,8 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/RXWatcher/continuum-plugin-support/internal/migrate"
-	"github.com/RXWatcher/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/silo-plugin-support/internal/migrate"
+	"github.com/RXWatcher/silo-plugin-support/internal/store"
 )
 
 // kbTestDeps spins a real Postgres-backed Store. Skips the calling
@@ -3453,7 +3453,7 @@ func TestKBAdminRoutesRejectNonAdmin(t *testing.T) {
 		"/api/admin/kb/tags",
 	} {
 		req := httptest.NewRequest(http.MethodGet, path, nil)
-		req.Header.Set("X-Continuum-User-Id", "42")
+		req.Header.Set("X-Silo-User-Id", "42")
 		// no admin role
 		rec := httptest.NewRecorder()
 		h.ServeHTTP(rec, req)
@@ -3478,8 +3478,8 @@ func TestKBArticleCRUDRoundTrip(t *testing.T) {
 	// Create draft.
 	body := fmt.Sprintf(`{"title":"Hello","categoryId":%d,"bodyHtml":"<p>hi</p>","status":"draft","tagLabels":["beta"]}`, cat.ID)
 	req := httptest.NewRequest(http.MethodPost, "/api/admin/kb/articles", bytes.NewBufferString(body))
-	req.Header.Set("X-Continuum-User-Id", "1")
-	req.Header.Set("X-Continuum-User-Role", "admin")
+	req.Header.Set("X-Silo-User-Id", "1")
+	req.Header.Set("X-Silo-User-Role", "admin")
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {
@@ -3496,8 +3496,8 @@ func TestKBArticleCRUDRoundTrip(t *testing.T) {
 	// Publish.
 	req = httptest.NewRequest(http.MethodPost,
 		fmt.Sprintf("/api/admin/kb/articles/%d/publish", created.ID), nil)
-	req.Header.Set("X-Continuum-User-Id", "1")
-	req.Header.Set("X-Continuum-User-Role", "admin")
+	req.Header.Set("X-Silo-User-Id", "1")
+	req.Header.Set("X-Silo-User-Role", "admin")
 	rec = httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {
@@ -3506,7 +3506,7 @@ func TestKBArticleCRUDRoundTrip(t *testing.T) {
 
 	// Customer detail returns it.
 	req = httptest.NewRequest(http.MethodGet, "/api/customer/kb/articles/hello", nil)
-	req.Header.Set("X-Continuum-User-Id", "9")
+	req.Header.Set("X-Silo-User-Id", "9")
 	rec = httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {
@@ -3516,7 +3516,7 @@ func TestKBArticleCRUDRoundTrip(t *testing.T) {
 	// Customer vote.
 	req = httptest.NewRequest(http.MethodPost, "/api/customer/kb/articles/hello/vote",
 		bytes.NewBufferString(`{"vote":"up"}`))
-	req.Header.Set("X-Continuum-User-Id", "9")
+	req.Header.Set("X-Silo-User-Id", "9")
 	rec = httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {
@@ -3680,7 +3680,7 @@ git -c user.name="Claude Code" -c user.email="noreply@anthropic.com" \
 - [ ] **Step 1: api/kb.ts**
 
 ```bash
-cd /opt/continuum_plugins/continuum-plugin-support
+cd /opt/silo_plugins/silo-plugin-support
 cat > web/src/api/kb.ts <<'EOF'
 import { api } from "@/lib/api";
 import type { KBArticle, KBArticleSummary, KBSearchHit } from "@/lib/types";
@@ -3726,7 +3726,7 @@ EOF
 - [ ] **Step 2: TrustedHTML — copy from public-catalog (uses DOMPurify, added as a dep in K1)**
 
 ```bash
-cp /opt/continuum_plugins/continuum-plugin-public-catalog/web/src/components/shared/TrustedHTML.tsx \
+cp /opt/silo_plugins/silo-plugin-public-catalog/web/src/components/shared/TrustedHTML.tsx \
    web/src/components/shared/TrustedHTML.tsx
 ```
 
@@ -5328,10 +5328,10 @@ git -c user.name="Claude Code" -c user.email="noreply@anthropic.com" \
 
 ```bash
 cat > README.md <<'EOF'
-# Continuum Support Plugin
+# Silo Support Plugin
 
-`continuum.support` is the customer-facing support surface for a
-Continuum deployment.
+`silo.support` is the customer-facing support surface for a
+Silo deployment.
 
 **Shipped modules:**
 
@@ -5359,7 +5359,7 @@ coverage; without it those tests skip cleanly.
 ## Configuration
 
 Requires `database_url` — a Postgres DSN, e.g.
-`postgres://plugin_support:...@host:5432/continuum?search_path=support&sslmode=disable`.
+`postgres://plugin_support:...@host:5432/silo?search_path=support&sslmode=disable`.
 
 The plugin manages its own schema; the operator only needs to create
 the schema and grant connect rights.
@@ -5367,11 +5367,11 @@ the schema and grant connect rights.
 ## KB events emitted
 
 The KB module publishes lifecycle events to the host bus, which
-`continuum.notifications` routes per its admin rules:
+`silo.notifications` routes per its admin rules:
 
-- `plugin.continuum.support.kb_article_published`
-- `plugin.continuum.support.kb_article_updated`
-- `plugin.continuum.support.kb_article_unhelpful`
+- `plugin.silo.support.kb_article_published`
+- `plugin.silo.support.kb_article_updated`
+- `plugin.silo.support.kb_article_unhelpful`
 
 ## KB cron
 

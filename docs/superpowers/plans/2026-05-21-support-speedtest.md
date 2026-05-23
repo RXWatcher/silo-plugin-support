@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add the Speedtest module to `continuum-plugin-support` — customer browser runs a LibreSpeed test against admin-defined endpoints; "Auto" switchable between latency-probe and admin-orderable geoip-source chain (db-ip.com seeded by default, auto-downloaded and kept current); results persisted per customer; admin gets endpoint / geoip / results / dashboards UIs.
+**Goal:** Add the Speedtest module to `silo-plugin-support` — customer browser runs a LibreSpeed test against admin-defined endpoints; "Auto" switchable between latency-probe and admin-orderable geoip-source chain (db-ip.com seeded by default, auto-downloaded and kept current); results persisted per customer; admin gets endpoint / geoip / results / dashboards UIs.
 
 **Architecture:** Extends the support plugin shell + KB module. Three new tables under the `support` schema (`st_endpoints`, `st_geoip_sources`, `st_results`). New routes added to the existing manifest. GeoIP resolution is a pluggable chain (`mmdb_auto` / `mmdb_file` / `http_api` / `request_header`) walked in admin-set `sort_order`. SPA gains 5 new bootstrap modes; customer page embeds LibreSpeed's official JS worker.
 
@@ -15,7 +15,7 @@
 
 ## File Structure
 
-All paths relative to `/opt/continuum_plugins/continuum-plugin-support/`.
+All paths relative to `/opt/silo_plugins/silo-plugin-support/`.
 
 ### Go side
 
@@ -46,8 +46,8 @@ All paths relative to `/opt/continuum_plugins/continuum-plugin-support/`.
 | `internal/server/st_events.go` | `speedtest_run` / `speedtest_slow` publisher helpers |
 | `internal/server/server.go` | Add ST routes to the chi router |
 | `internal/server/spa.go` | Add new bootstrap modes to `supportBootstrap` |
-| `cmd/continuum-plugin-support/main.go` | Wire GeoIP chain + downloader ticker into `applyConfig` |
-| `cmd/continuum-plugin-support/manifest.json` | Add ST http_routes + bump version to 0.3.0 |
+| `cmd/silo-plugin-support/main.go` | Wire GeoIP chain + downloader ticker into `applyConfig` |
+| `cmd/silo-plugin-support/manifest.json` | Add ST http_routes + bump version to 0.3.0 |
 | `internal/runtime/runtime.go` | Add ST-related Config fields + flip `Modules.Speedtest` default |
 
 ### Web side
@@ -87,7 +87,7 @@ All paths relative to `/opt/continuum_plugins/continuum-plugin-support/`.
 - [ ] **Step 1: Write the up migration (includes db-ip seed row)**
 
 ```bash
-cd /opt/continuum_plugins/continuum-plugin-support
+cd /opt/silo_plugins/silo-plugin-support
 cat > internal/migrate/files/0003_speedtest_init.up.sql <<'EOF'
 CREATE TABLE st_endpoints (
     id          BIGSERIAL PRIMARY KEY,
@@ -570,7 +570,7 @@ git -c user.name="Claude Code" -c user.email="noreply@anthropic.com" \
 - [ ] **Step 1: Add the dep**
 
 ```bash
-cd /opt/continuum_plugins/continuum-plugin-support
+cd /opt/silo_plugins/silo-plugin-support
 go get github.com/oschwald/geoip2-golang@latest
 go mod tidy
 ```
@@ -1301,7 +1301,7 @@ package geoip
 import (
 	"fmt"
 
-	"github.com/RXWatcher/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/silo-plugin-support/internal/store"
 )
 
 // BuildSource constructs a concrete Source from a store row.
@@ -1341,7 +1341,7 @@ git -c user.name="Claude Code" -c user.email="noreply@anthropic.com" \
 - [ ] **Step 1: Write the file**
 
 ```bash
-cd /opt/continuum_plugins/continuum-plugin-support
+cd /opt/silo_plugins/silo-plugin-support
 cat > internal/store/st_endpoints.go <<'EOF'
 package store
 
@@ -1854,7 +1854,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/RXWatcher/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/silo-plugin-support/internal/store"
 )
 
 type fakeEPStore struct{ endpoints []store.STEndpoint }
@@ -1932,7 +1932,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/RXWatcher/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/silo-plugin-support/internal/store"
 )
 
 // EndpointLister is the slice of Store the resolver needs.
@@ -2033,7 +2033,7 @@ git -c user.name="Claude Code" -c user.email="noreply@anthropic.com" \
 - Create: `internal/server/handlers_st_customer.go`
 
 ```bash
-cd /opt/continuum_plugins/continuum-plugin-support
+cd /opt/silo_plugins/silo-plugin-support
 cat > internal/server/handlers_st_customer.go <<'EOF'
 package server
 
@@ -2044,8 +2044,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/RXWatcher/continuum-plugin-support/internal/speedtest"
-	"github.com/RXWatcher/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/silo-plugin-support/internal/speedtest"
+	"github.com/RXWatcher/silo-plugin-support/internal/store"
 )
 
 // stCustomerStore unwraps Deps.ConfigStore into the concrete *store.Store
@@ -2063,8 +2063,8 @@ func hSTSpeedtestPage(d Deps) http.HandlerFunc {
 			Mode:    "speedtest",
 			Theme:   adminTheme(r),
 			Modules: currentModules(r.Context(), d),
-			UserID:  r.Header.Get("X-Continuum-User-Id"),
-			IsAdmin: r.Header.Get("X-Continuum-User-Role") == "admin",
+			UserID:  r.Header.Get("X-Silo-User-Id"),
+			IsAdmin: r.Header.Get("X-Silo-User-Role") == "admin",
 		}, http.StatusOK)
 	}
 }
@@ -2108,7 +2108,7 @@ type stResultRequest struct {
 
 func hSTCustomerSaveResult(d Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		customerID := r.Header.Get("X-Continuum-User-Id")
+		customerID := r.Header.Get("X-Silo-User-Id")
 
 		// 60s per-customer rate limit.
 		last, err := stCustomerStore(d).STLastResultAt(r.Context(), customerID)
@@ -2171,7 +2171,7 @@ func hSTCustomerSaveResult(d Deps) http.HandlerFunc {
 func hSTCustomerHistory(d Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		hist, err := stCustomerStore(d).STCustomerHistory(r.Context(),
-			r.Header.Get("X-Continuum-User-Id"), 20)
+			r.Header.Get("X-Silo-User-Id"), 20)
 		if err != nil {
 			writeInternal(w, r, d, "st_history_failed", err)
 			return
@@ -2181,7 +2181,7 @@ func hSTCustomerHistory(d Deps) http.HandlerFunc {
 }
 
 // clientIP returns the best-guess client IP, preferring X-Forwarded-For's
-// first entry when present (Continuum runs behind a reverse proxy).
+// first entry when present (Silo runs behind a reverse proxy).
 func clientIP(r *http.Request) string {
 	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
 		if i := strings.IndexByte(xff, ','); i > 0 {
@@ -2252,7 +2252,7 @@ package server
 import (
 	"context"
 
-	"github.com/RXWatcher/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/silo-plugin-support/internal/store"
 )
 
 // stPublishEvent assembles the base speedtest payload + extra keys
@@ -2277,7 +2277,7 @@ func stPublishEvent(d Deps, name string, r store.STResult, extra map[string]any)
 		payload[k] = v
 	}
 	if err := d.EventPublisher.PublishEvent(context.Background(),
-		"plugin.continuum.support."+name, payload); err != nil && d.Logger != nil {
+		"plugin.silo.support."+name, payload); err != nil && d.Logger != nil {
 		d.Logger.Warn("speedtest event publish failed", "event", name, "err", err)
 	}
 }
@@ -2312,7 +2312,7 @@ Wait — `Resolve` returns `speedtest.AutoResolution`, not `any`. Cleaner: keep 
 ```go
 import (
     // ... existing imports
-    "github.com/RXWatcher/continuum-plugin-support/internal/speedtest"
+    "github.com/RXWatcher/silo-plugin-support/internal/speedtest"
 )
 
 type Deps struct {
@@ -2363,8 +2363,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/RXWatcher/continuum-plugin-support/internal/speedtest/geoip"
-	"github.com/RXWatcher/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/silo-plugin-support/internal/speedtest/geoip"
+	"github.com/RXWatcher/silo-plugin-support/internal/store"
 )
 
 func stAdminStore(d Deps) *store.Store {
@@ -2703,7 +2703,7 @@ func geoipCacheDir(d Deps) string {
 	if d.STGeoIPCacheDir != "" {
 		return d.STGeoIPCacheDir
 	}
-	return "/var/cache/continuum-plugin-support/geoip"
+	return "/var/cache/silo-plugin-support/geoip"
 }
 
 // --- Results + dashboards -------------------------------------------
@@ -2818,7 +2818,7 @@ go build ./...
 
 ### Task G2: Update manifest.json
 
-Edit `cmd/continuum-plugin-support/manifest.json`. Bump `version` to `0.3.0`. Append (preserve all existing entries):
+Edit `cmd/silo-plugin-support/manifest.json`. Bump `version` to `0.3.0`. Append (preserve all existing entries):
 
 ```json
     { "id": "st_browse",        "method": "GET",  "path": "/speedtest",                          "access": "user" },
@@ -2832,7 +2832,7 @@ Edit `cmd/continuum-plugin-support/manifest.json`. Bump `version` to `0.3.0`. Ap
 
 ### Task G3: Wire `main.go` (chain + downloader + resolver)
 
-Edit `cmd/continuum-plugin-support/main.go`. Inside `applyConfig`, AFTER `st := store.New(pool)` and BEFORE `httpSrv.SetHandler(server.New(...))`, build the GeoIP chain + resolver:
+Edit `cmd/silo-plugin-support/main.go`. Inside `applyConfig`, AFTER `st := store.New(pool)` and BEFORE `httpSrv.SetHandler(server.New(...))`, build the GeoIP chain + resolver:
 
 ```go
 	// Build GeoIP chain from the store's active source rows.
@@ -2899,8 +2899,8 @@ Imports to add at the top of `main.go`:
 ```go
 "time"
 
-"github.com/RXWatcher/continuum-plugin-support/internal/speedtest"
-"github.com/RXWatcher/continuum-plugin-support/internal/speedtest/geoip"
+"github.com/RXWatcher/silo-plugin-support/internal/speedtest"
+"github.com/RXWatcher/silo-plugin-support/internal/speedtest/geoip"
 ```
 
 ### Task G4: Add Config fields + flip Modules.Speedtest default
@@ -2970,13 +2970,13 @@ if observed.Modules.Tickets || observed.Modules.AI {
 ### Task G5: Verify + single commit for G1-G4
 
 ```bash
-cd /opt/continuum_plugins/continuum-plugin-support
+cd /opt/silo_plugins/silo-plugin-support
 go build ./...
 go test ./...
 GOWORK=off go build ./...
 
 git -c user.name="Claude Code" -c user.email="noreply@anthropic.com" \
-  add internal/server/server.go cmd/continuum-plugin-support/manifest.json cmd/continuum-plugin-support/main.go internal/runtime/runtime.go internal/runtime/runtime_test.go
+  add internal/server/server.go cmd/silo-plugin-support/manifest.json cmd/silo-plugin-support/main.go internal/runtime/runtime.go internal/runtime/runtime_test.go
 git -c user.name="Claude Code" -c user.email="noreply@anthropic.com" \
   commit -m "feat: wire speedtest routes + main.go + manifest 0.3.0 + Modules.Speedtest default true"
 ```
@@ -3006,9 +3006,9 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/RXWatcher/continuum-plugin-support/internal/migrate"
-	"github.com/RXWatcher/continuum-plugin-support/internal/speedtest"
-	"github.com/RXWatcher/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/silo-plugin-support/internal/migrate"
+	"github.com/RXWatcher/silo-plugin-support/internal/speedtest"
+	"github.com/RXWatcher/silo-plugin-support/internal/store"
 )
 
 func stTestDeps(t *testing.T) (Deps, *store.Store, func()) {
@@ -3059,7 +3059,7 @@ func TestSTAdminRoutesRejectNonAdmin(t *testing.T) {
 		"/api/admin/speedtest/results",
 	} {
 		req := httptest.NewRequest(http.MethodGet, path, nil)
-		req.Header.Set("X-Continuum-User-Id", "42")
+		req.Header.Set("X-Silo-User-Id", "42")
 		rec := httptest.NewRecorder()
 		h.ServeHTTP(rec, req)
 		if rec.Code != http.StatusForbidden {
@@ -3076,8 +3076,8 @@ func TestSTEndpointCRUDRoundTrip(t *testing.T) {
 	// Create endpoint
 	body := `{"label":"London","url":"https://lon/","country":"GB","sortOrder":0,"active":true}`
 	req := httptest.NewRequest(http.MethodPost, "/api/admin/speedtest/endpoints", bytes.NewBufferString(body))
-	req.Header.Set("X-Continuum-User-Id", "1")
-	req.Header.Set("X-Continuum-User-Role", "admin")
+	req.Header.Set("X-Silo-User-Id", "1")
+	req.Header.Set("X-Silo-User-Role", "admin")
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {
@@ -3090,7 +3090,7 @@ func TestSTEndpointCRUDRoundTrip(t *testing.T) {
 
 	// List as customer
 	req = httptest.NewRequest(http.MethodGet, "/api/customer/speedtest/endpoints", nil)
-	req.Header.Set("X-Continuum-User-Id", "9")
+	req.Header.Set("X-Silo-User-Id", "9")
 	rec = httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {
@@ -3100,7 +3100,7 @@ func TestSTEndpointCRUDRoundTrip(t *testing.T) {
 	// Save a result
 	rbody := fmt.Sprintf(`{"endpointId":%d,"endpointLabel":"London","downloadMbps":142.3,"uploadMbps":18.7,"pingMs":28,"jitterMs":2.1}`, ep.ID)
 	req = httptest.NewRequest(http.MethodPost, "/api/customer/speedtest/results", bytes.NewBufferString(rbody))
-	req.Header.Set("X-Continuum-User-Id", "9")
+	req.Header.Set("X-Silo-User-Id", "9")
 	req.RemoteAddr = "192.0.2.50:1234"
 	rec = httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
@@ -3110,7 +3110,7 @@ func TestSTEndpointCRUDRoundTrip(t *testing.T) {
 
 	// Second result within 60s -> 429
 	req = httptest.NewRequest(http.MethodPost, "/api/customer/speedtest/results", bytes.NewBufferString(rbody))
-	req.Header.Set("X-Continuum-User-Id", "9")
+	req.Header.Set("X-Silo-User-Id", "9")
 	rec = httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	if rec.Code != http.StatusTooManyRequests {
@@ -3119,7 +3119,7 @@ func TestSTEndpointCRUDRoundTrip(t *testing.T) {
 
 	// History
 	req = httptest.NewRequest(http.MethodGet, "/api/customer/speedtest/results", nil)
-	req.Header.Set("X-Continuum-User-Id", "9")
+	req.Header.Set("X-Silo-User-Id", "9")
 	rec = httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {
@@ -3141,7 +3141,7 @@ func TestSTAutoLatencyReturnsCandidates(t *testing.T) {
 	}
 
 	req := httptest.NewRequest(http.MethodGet, "/api/customer/speedtest/auto", nil)
-	req.Header.Set("X-Continuum-User-Id", "9")
+	req.Header.Set("X-Silo-User-Id", "9")
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {
@@ -3261,7 +3261,7 @@ Extend `SupportBootstrap.mode` to add the 5 new modes:
 ```
 
 ```bash
-cd /opt/continuum_plugins/continuum-plugin-support
+cd /opt/silo_plugins/silo-plugin-support
 cd web && pnpm test && pnpm exec tsc -b --noEmit && cd ..
 git -c user.name="Claude Code" -c user.email="noreply@anthropic.com" \
   add web/src/lib/types.ts
@@ -3450,7 +3450,7 @@ in our GPL-compatible / commercial-but-internal plugin is fine).
 Vendor the file verbatim — do not modify.
 
 ```bash
-cd /opt/continuum_plugins/continuum-plugin-support
+cd /opt/silo_plugins/silo-plugin-support
 mkdir -p web/public
 curl -fsSL https://raw.githubusercontent.com/librespeed/speedtest/master/speedtest_worker.js \
      -o web/public/speedtest_worker.js
@@ -3463,7 +3463,7 @@ wc -l web/public/speedtest_worker.js
 head -20 web/public/speedtest_worker.js
 ```
 
-Vite serves `web/public/*` at the root, so the SPA can load it as `/speedtest_worker.js`. Since the SPA is mounted via Continuum's plugin router, the actual served path is `<mount>/speedtest_worker.js` — confirm by examining how the shell's main.tsx / index.html references static assets and adjust the loader path in Task J2 accordingly.
+Vite serves `web/public/*` at the root, so the SPA can load it as `/speedtest_worker.js`. Since the SPA is mounted via Silo's plugin router, the actual served path is `<mount>/speedtest_worker.js` — confirm by examining how the shell's main.tsx / index.html references static assets and adjust the loader path in Task J2 accordingly.
 
 ```bash
 git -c user.name="Claude Code" -c user.email="noreply@anthropic.com" \
@@ -3589,7 +3589,7 @@ git -c user.name="Claude Code" -c user.email="noreply@anthropic.com" \
 - Create: `web/src/components/st/HistoryList.tsx`
 
 ```bash
-cd /opt/continuum_plugins/continuum-plugin-support
+cd /opt/silo_plugins/silo-plugin-support
 mkdir -p web/src/components/st
 
 cat > web/src/components/st/EndpointPicker.test.tsx <<'EOF'
@@ -4441,7 +4441,7 @@ git -c user.name="Claude Code" -c user.email="noreply@anthropic.com" \
 Read the current App.tsx (from KB Unit 26 it already dispatches kb-* modes). Add the 5 new ST cases to the existing switch.
 
 ```bash
-cd /opt/continuum_plugins/continuum-plugin-support
+cd /opt/silo_plugins/silo-plugin-support
 cat > web/src/App.tsx <<'EOF'
 import type { ReactNode } from "react";
 import { Toaster } from "@/components/ui/sonner";
@@ -4516,10 +4516,10 @@ grep 'speedtest:' web/src/lib/modules.ts   # confirm true
 
 ```bash
 cat > README.md <<'EOF'
-# Continuum Support Plugin
+# Silo Support Plugin
 
-`continuum.support` is the customer-facing support surface for a
-Continuum deployment.
+`silo.support` is the customer-facing support surface for a
+Silo deployment.
 
 **Shipped modules:**
 
@@ -4547,7 +4547,7 @@ skip cleanly.
 ## Configuration
 
 Requires `database_url` — a Postgres DSN, e.g.
-`postgres://plugin_support:...@host:5432/continuum?search_path=support&sslmode=disable`.
+`postgres://plugin_support:...@host:5432/silo?search_path=support&sslmode=disable`.
 
 The plugin manages its own schema; the operator only needs to create
 the schema and grant connect rights.
@@ -4557,20 +4557,20 @@ Speedtest-related config keys (all optional, sane defaults):
 - `auto_strategy` — `latency` (default) or `geoip`
 - `client_ip_storage` — `truncated` (default) or `off`
 - `slow_threshold_mbps` — default `5`
-- `geoip_cache_dir` — default `$XDG_CACHE_HOME/continuum-plugin-support/geoip/`
+- `geoip_cache_dir` — default `$XDG_CACHE_HOME/silo-plugin-support/geoip/`
 
 ## Events emitted
 
-Routed via the existing `continuum.notifications` plugin per admin rules.
+Routed via the existing `silo.notifications` plugin per admin rules.
 
 **KB:**
-- `plugin.continuum.support.kb_article_published`
-- `plugin.continuum.support.kb_article_updated`
-- `plugin.continuum.support.kb_article_unhelpful`
+- `plugin.silo.support.kb_article_published`
+- `plugin.silo.support.kb_article_updated`
+- `plugin.silo.support.kb_article_unhelpful`
 
 **Speedtest:**
-- `plugin.continuum.support.speedtest_run`
-- `plugin.continuum.support.speedtest_slow`
+- `plugin.silo.support.speedtest_run`
+- `plugin.silo.support.speedtest_slow`
 
 ## Crons
 

@@ -9,8 +9,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/RXWatcher/continuum-plugin-support/internal/store"
-	"github.com/RXWatcher/continuum-plugin-support/internal/tickets"
+	"github.com/RXWatcher/silo-plugin-support/internal/store"
+	"github.com/RXWatcher/silo-plugin-support/internal/tickets"
 )
 
 func tkCustomerStore(d Deps) *store.Store {
@@ -37,8 +37,8 @@ func hTKListPage(d Deps) http.HandlerFunc {
 		writeSPA(w, r, supportBootstrap{
 			Mode: "tickets-list", Theme: adminTheme(r),
 			Modules: currentModules(r.Context(), d),
-			UserID:  r.Header.Get("X-Continuum-User-Id"),
-			IsAdmin: r.Header.Get("X-Continuum-User-Role") == "admin",
+			UserID:  r.Header.Get("X-Silo-User-Id"),
+			IsAdmin: r.Header.Get("X-Silo-User-Role") == "admin",
 		}, http.StatusOK)
 	}
 }
@@ -48,8 +48,8 @@ func hTKDetailPage(d Deps) http.HandlerFunc {
 		writeSPA(w, r, supportBootstrap{
 			Mode: "tickets-detail", Theme: adminTheme(r),
 			Modules: currentModules(r.Context(), d),
-			UserID:  r.Header.Get("X-Continuum-User-Id"),
-			IsAdmin: r.Header.Get("X-Continuum-User-Role") == "admin",
+			UserID:  r.Header.Get("X-Silo-User-Id"),
+			IsAdmin: r.Header.Get("X-Silo-User-Role") == "admin",
 		}, http.StatusOK)
 	}
 }
@@ -59,8 +59,8 @@ func hTKNewPage(d Deps) http.HandlerFunc {
 		writeSPA(w, r, supportBootstrap{
 			Mode: "tickets-new", Theme: adminTheme(r),
 			Modules: currentModules(r.Context(), d),
-			UserID:  r.Header.Get("X-Continuum-User-Id"),
-			IsAdmin: r.Header.Get("X-Continuum-User-Role") == "admin",
+			UserID:  r.Header.Get("X-Silo-User-Id"),
+			IsAdmin: r.Header.Get("X-Silo-User-Role") == "admin",
 		}, http.StatusOK)
 	}
 }
@@ -105,7 +105,7 @@ func hTKCategoriesForCustomer(d Deps) http.HandlerFunc {
 func hTKCustomerList(d Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		f := store.TKTicketListFilter{
-			CustomerID:  r.Header.Get("X-Continuum-User-Id"),
+			CustomerID:  r.Header.Get("X-Silo-User-Id"),
 			StatusGroup: r.URL.Query().Get("statusGroup"),
 			Limit:       parseLimit(r.URL.Query().Get("limit"), 100),
 			Offset:      parseInt(r.URL.Query().Get("offset")),
@@ -139,7 +139,7 @@ func hTKCustomerDetail(d Deps) http.HandlerFunc {
 			writeInternal(w, r, d, "tk_detail_failed", err)
 			return
 		}
-		if t.CustomerID != r.Header.Get("X-Continuum-User-Id") {
+		if t.CustomerID != r.Header.Get("X-Silo-User-Id") {
 			writeErr(w, http.StatusNotFound, "tk_not_found", "ticket not found")
 			return
 		}
@@ -212,7 +212,7 @@ func hTKCustomerCreate(d Deps) http.HandlerFunc {
 
 		saved, err := st.TKCreateTicket(r.Context(), tx, store.TKTicket{
 			TrackingNumber: tn,
-			CustomerID:     r.Header.Get("X-Continuum-User-Id"),
+			CustomerID:     r.Header.Get("X-Silo-User-Id"),
 			CustomerEmail:  req.CustomerEmail,
 			CategoryID:     req.CategoryID,
 			SubcategoryID:  req.SubcategoryID,
@@ -274,7 +274,7 @@ func hTKCustomerReply(d Deps) http.HandlerFunc {
 			writeInternal(w, r, d, "tk_reply_failed", err)
 			return
 		}
-		if t.CustomerID != r.Header.Get("X-Continuum-User-Id") {
+		if t.CustomerID != r.Header.Get("X-Silo-User-Id") {
 			writeErr(w, http.StatusNotFound, "tk_not_found", "ticket not found")
 			return
 		}
@@ -340,7 +340,7 @@ func hTKCustomerReopen(d Deps) http.HandlerFunc {
 			writeInternal(w, r, d, "tk_reopen_failed", err)
 			return
 		}
-		if t.CustomerID != r.Header.Get("X-Continuum-User-Id") {
+		if t.CustomerID != r.Header.Get("X-Silo-User-Id") {
 			writeErr(w, http.StatusNotFound, "tk_not_found", "ticket not found")
 			return
 		}

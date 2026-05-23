@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	pluginrt "github.com/RXWatcher/continuum-plugin-support/internal/runtime"
+	pluginrt "github.com/RXWatcher/silo-plugin-support/internal/runtime"
 )
 
 func hAdminPage(d Deps) http.HandlerFunc {
@@ -15,7 +15,7 @@ func hAdminPage(d Deps) http.HandlerFunc {
 			Mode:    "admin-home",
 			Theme:   adminTheme(r),
 			Modules: modules,
-			UserID:  r.Header.Get("X-Continuum-User-Id"),
+			UserID:  r.Header.Get("X-Silo-User-Id"),
 			IsAdmin: true,
 		}, http.StatusOK)
 	}

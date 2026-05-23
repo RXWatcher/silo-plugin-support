@@ -12,8 +12,8 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/RXWatcher/continuum-plugin-support/internal/migrate"
-	"github.com/RXWatcher/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/silo-plugin-support/internal/migrate"
+	"github.com/RXWatcher/silo-plugin-support/internal/store"
 )
 
 func tkTestDeps(t *testing.T) (Deps, *store.Store, func()) {
@@ -57,7 +57,7 @@ func TestTKAdminRoutesRejectNonAdmin(t *testing.T) {
 	h := New(d)
 	for _, path := range []string{"/admin/tickets", "/api/admin/tickets", "/api/admin/categories"} {
 		req := httptest.NewRequest(http.MethodGet, path, nil)
-		req.Header.Set("X-Continuum-User-Id", "42")
+		req.Header.Set("X-Silo-User-Id", "42")
 		rec := httptest.NewRecorder()
 		h.ServeHTTP(rec, req)
 		if rec.Code != http.StatusForbidden {
@@ -76,7 +76,7 @@ func TestTKCustomerCreateAndDetailRoundTrip(t *testing.T) {
 
 	body := fmt.Sprintf(`{"categoryId":%d,"subject":"hello","body":"world","customerEmail":"a@b"}`, cat.ID)
 	req := httptest.NewRequest(http.MethodPost, "/api/customer/tickets", bytes.NewBufferString(body))
-	req.Header.Set("X-Continuum-User-Id", "42")
+	req.Header.Set("X-Silo-User-Id", "42")
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {
@@ -92,7 +92,7 @@ func TestTKCustomerCreateAndDetailRoundTrip(t *testing.T) {
 
 	// Detail (owner)
 	req = httptest.NewRequest(http.MethodGet, "/api/customer/tickets/"+created.TrackingNumber, nil)
-	req.Header.Set("X-Continuum-User-Id", "42")
+	req.Header.Set("X-Silo-User-Id", "42")
 	rec = httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {
@@ -101,7 +101,7 @@ func TestTKCustomerCreateAndDetailRoundTrip(t *testing.T) {
 
 	// Cross-customer → 404 (don't leak existence)
 	req = httptest.NewRequest(http.MethodGet, "/api/customer/tickets/"+created.TrackingNumber, nil)
-	req.Header.Set("X-Continuum-User-Id", "99")
+	req.Header.Set("X-Silo-User-Id", "99")
 	rec = httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	if rec.Code != http.StatusNotFound {
@@ -118,7 +118,7 @@ func TestTKAdminLifecycle(t *testing.T) {
 
 	body := fmt.Sprintf(`{"categoryId":%d,"subject":"lifecycle","body":"start","customerEmail":"c@d"}`, cat.ID)
 	req := httptest.NewRequest(http.MethodPost, "/api/customer/tickets", bytes.NewBufferString(body))
-	req.Header.Set("X-Continuum-User-Id", "100")
+	req.Header.Set("X-Silo-User-Id", "100")
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	var created store.TKTicket
@@ -127,8 +127,8 @@ func TestTKAdminLifecycle(t *testing.T) {
 
 	req = httptest.NewRequest(http.MethodPost, "/api/admin/tickets/"+tn+"/reply",
 		bytes.NewBufferString(`{"body":"hi"}`))
-	req.Header.Set("X-Continuum-User-Id", "1")
-	req.Header.Set("X-Continuum-User-Role", "admin")
+	req.Header.Set("X-Silo-User-Id", "1")
+	req.Header.Set("X-Silo-User-Role", "admin")
 	rec = httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {
@@ -137,8 +137,8 @@ func TestTKAdminLifecycle(t *testing.T) {
 
 	req = httptest.NewRequest(http.MethodPost, "/api/admin/tickets/"+tn+"/status",
 		bytes.NewBufferString(`{"to":"resolved"}`))
-	req.Header.Set("X-Continuum-User-Id", "1")
-	req.Header.Set("X-Continuum-User-Role", "admin")
+	req.Header.Set("X-Silo-User-Id", "1")
+	req.Header.Set("X-Silo-User-Role", "admin")
 	rec = httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {
@@ -146,7 +146,7 @@ func TestTKAdminLifecycle(t *testing.T) {
 	}
 
 	req = httptest.NewRequest(http.MethodPost, "/api/customer/tickets/"+tn+"/reopen", nil)
-	req.Header.Set("X-Continuum-User-Id", "100")
+	req.Header.Set("X-Silo-User-Id", "100")
 	rec = httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {
@@ -164,7 +164,7 @@ func TestTKAttachmentTooLargeReturns413(t *testing.T) {
 	body.Write(big)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/tickets/entries/1/attachments", body)
-	req.Header.Set("X-Continuum-User-Id", "1")
+	req.Header.Set("X-Silo-User-Id", "1")
 	req.Header.Set("Content-Type", "multipart/form-data; boundary=BOUNDARY")
 	req.ContentLength = int64(body.Len())
 	rec := httptest.NewRecorder()

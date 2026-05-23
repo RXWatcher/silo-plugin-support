@@ -12,9 +12,9 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/RXWatcher/continuum-plugin-support/internal/migrate"
-	"github.com/RXWatcher/continuum-plugin-support/internal/speedtest"
-	"github.com/RXWatcher/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/silo-plugin-support/internal/migrate"
+	"github.com/RXWatcher/silo-plugin-support/internal/speedtest"
+	"github.com/RXWatcher/silo-plugin-support/internal/store"
 )
 
 func stTestDeps(t *testing.T) (Deps, *store.Store, func()) {
@@ -64,7 +64,7 @@ func TestSTAdminRoutesRejectNonAdmin(t *testing.T) {
 		"/api/admin/speedtest/results",
 	} {
 		req := httptest.NewRequest(http.MethodGet, path, nil)
-		req.Header.Set("X-Continuum-User-Id", "42")
+		req.Header.Set("X-Silo-User-Id", "42")
 		rec := httptest.NewRecorder()
 		h.ServeHTTP(rec, req)
 		if rec.Code != http.StatusForbidden {
@@ -80,8 +80,8 @@ func TestSTEndpointCRUDRoundTrip(t *testing.T) {
 
 	body := `{"label":"London","url":"https://lon/","country":"GB","sortOrder":0,"active":true}`
 	req := httptest.NewRequest(http.MethodPost, "/api/admin/speedtest/endpoints", bytes.NewBufferString(body))
-	req.Header.Set("X-Continuum-User-Id", "1")
-	req.Header.Set("X-Continuum-User-Role", "admin")
+	req.Header.Set("X-Silo-User-Id", "1")
+	req.Header.Set("X-Silo-User-Role", "admin")
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {
@@ -93,7 +93,7 @@ func TestSTEndpointCRUDRoundTrip(t *testing.T) {
 	}
 
 	req = httptest.NewRequest(http.MethodGet, "/api/customer/speedtest/endpoints", nil)
-	req.Header.Set("X-Continuum-User-Id", "9")
+	req.Header.Set("X-Silo-User-Id", "9")
 	rec = httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {
@@ -102,7 +102,7 @@ func TestSTEndpointCRUDRoundTrip(t *testing.T) {
 
 	rbody := fmt.Sprintf(`{"endpointId":%d,"endpointLabel":"London","downloadMbps":142.3,"uploadMbps":18.7,"pingMs":28,"jitterMs":2.1}`, ep.ID)
 	req = httptest.NewRequest(http.MethodPost, "/api/customer/speedtest/results", bytes.NewBufferString(rbody))
-	req.Header.Set("X-Continuum-User-Id", "9")
+	req.Header.Set("X-Silo-User-Id", "9")
 	req.RemoteAddr = "192.0.2.50:1234"
 	rec = httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
@@ -111,7 +111,7 @@ func TestSTEndpointCRUDRoundTrip(t *testing.T) {
 	}
 
 	req = httptest.NewRequest(http.MethodPost, "/api/customer/speedtest/results", bytes.NewBufferString(rbody))
-	req.Header.Set("X-Continuum-User-Id", "9")
+	req.Header.Set("X-Silo-User-Id", "9")
 	rec = httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	if rec.Code != http.StatusTooManyRequests {
@@ -119,7 +119,7 @@ func TestSTEndpointCRUDRoundTrip(t *testing.T) {
 	}
 
 	req = httptest.NewRequest(http.MethodGet, "/api/customer/speedtest/results", nil)
-	req.Header.Set("X-Continuum-User-Id", "9")
+	req.Header.Set("X-Silo-User-Id", "9")
 	rec = httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {
@@ -140,7 +140,7 @@ func TestSTAutoLatencyReturnsCandidates(t *testing.T) {
 	}
 
 	req := httptest.NewRequest(http.MethodGet, "/api/customer/speedtest/auto", nil)
-	req.Header.Set("X-Continuum-User-Id", "9")
+	req.Header.Set("X-Silo-User-Id", "9")
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {

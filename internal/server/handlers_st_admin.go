@@ -13,8 +13,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/RXWatcher/continuum-plugin-support/internal/speedtest/geoip"
-	"github.com/RXWatcher/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/silo-plugin-support/internal/speedtest/geoip"
+	"github.com/RXWatcher/silo-plugin-support/internal/store"
 )
 
 func stAdminStore(d Deps) *store.Store {
@@ -349,20 +349,20 @@ func errString(e error) string {
 // geoipCacheDir picks the on-disk cache dir for mmdb_auto downloads.
 // Resolution order:
 //  1. Explicit Deps.STGeoIPCacheDir from config
-//  2. $XDG_CACHE_HOME/continuum-plugin-support/geoip
-//  3. $HOME/.cache/continuum-plugin-support/geoip
-//  4. .continuum-plugin-support-cache/geoip (last-resort relative, e.g. for tests)
+//  2. $XDG_CACHE_HOME/silo-plugin-support/geoip
+//  3. $HOME/.cache/silo-plugin-support/geoip
+//  4. .silo-plugin-support-cache/geoip (last-resort relative, e.g. for tests)
 func geoipCacheDir(d Deps) string {
 	if d.STGeoIPCacheDir != "" {
 		return d.STGeoIPCacheDir
 	}
 	if xdg := os.Getenv("XDG_CACHE_HOME"); xdg != "" {
-		return filepath.Join(xdg, "continuum-plugin-support", "geoip")
+		return filepath.Join(xdg, "silo-plugin-support", "geoip")
 	}
 	if home, err := os.UserHomeDir(); err == nil && home != "" {
-		return filepath.Join(home, ".cache", "continuum-plugin-support", "geoip")
+		return filepath.Join(home, ".cache", "silo-plugin-support", "geoip")
 	}
-	return filepath.Join(".continuum-plugin-support-cache", "geoip")
+	return filepath.Join(".silo-plugin-support-cache", "geoip")
 }
 
 // --- Results + dashboards -------------------------------------------

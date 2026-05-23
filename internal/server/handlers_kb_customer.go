@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/RXWatcher/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/silo-plugin-support/internal/store"
 )
 
 // hKBBrowsePage renders the customer SPA shell in browse mode.
@@ -18,8 +18,8 @@ func hKBBrowsePage(d Deps) http.HandlerFunc {
 			Mode:    "kb-browse",
 			Theme:   adminTheme(r),
 			Modules: currentModules(r.Context(), d),
-			UserID:  r.Header.Get("X-Continuum-User-Id"),
-			IsAdmin: r.Header.Get("X-Continuum-User-Role") == "admin",
+			UserID:  r.Header.Get("X-Silo-User-Id"),
+			IsAdmin: r.Header.Get("X-Silo-User-Role") == "admin",
 		}, http.StatusOK)
 	}
 }
@@ -33,8 +33,8 @@ func hKBDetailPage(d Deps) http.HandlerFunc {
 			Mode:    "kb-detail",
 			Theme:   adminTheme(r),
 			Modules: currentModules(r.Context(), d),
-			UserID:  r.Header.Get("X-Continuum-User-Id"),
-			IsAdmin: r.Header.Get("X-Continuum-User-Role") == "admin",
+			UserID:  r.Header.Get("X-Silo-User-Id"),
+			IsAdmin: r.Header.Get("X-Silo-User-Role") == "admin",
 		}, http.StatusOK)
 	}
 }
@@ -80,10 +80,10 @@ func hKBCustomerDetail(d Deps) http.HandlerFunc {
 		}
 		// Record view (best-effort — failure doesn't break the page).
 		_, _ = kbCustomerStore(d).KBRecordView(r.Context(), article.ID,
-			r.Header.Get("X-Continuum-User-Id"))
+			r.Header.Get("X-Silo-User-Id"))
 		// Populate the calling customer's existing vote (best-effort).
 		if v, err := kbCustomerStore(d).KBGetVote(r.Context(), article.ID,
-			r.Header.Get("X-Continuum-User-Id")); err == nil {
+			r.Header.Get("X-Silo-User-Id")); err == nil {
 			article.MyVote = v
 		}
 		writeJSON(w, http.StatusOK, article)
@@ -154,7 +154,7 @@ func hKBCustomerVote(d Deps) http.HandlerFunc {
 			return
 		}
 		if err := kbCustomerStore(d).KBUpsertVote(r.Context(), article.ID,
-			r.Header.Get("X-Continuum-User-Id"), body.Vote); err != nil {
+			r.Header.Get("X-Silo-User-Id"), body.Vote); err != nil {
 			writeInternal(w, r, d, "kb_vote_failed", err)
 			return
 		}

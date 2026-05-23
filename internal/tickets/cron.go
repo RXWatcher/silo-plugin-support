@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/RXWatcher/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/silo-plugin-support/internal/store"
 )
 
 // CronStore is the slice of *store.Store the cron needs.

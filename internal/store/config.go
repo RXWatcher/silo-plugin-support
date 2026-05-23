@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	pluginrt "github.com/RXWatcher/continuum-plugin-support/internal/runtime"
+	pluginrt "github.com/RXWatcher/silo-plugin-support/internal/runtime"
 )
 
 // GetConfig reads the singleton app_config row. On any read or

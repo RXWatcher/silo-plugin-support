@@ -3,7 +3,7 @@ package server
 import (
 	"context"
 
-	"github.com/RXWatcher/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/silo-plugin-support/internal/store"
 )
 
 // tkPublishEvent assembles the base ticket payload + extra keys and
@@ -36,7 +36,7 @@ func tkPublishEvent(d Deps, name string, t store.TKTicket, extra map[string]any)
 		payload[k] = v
 	}
 	if err := d.EventPublisher.PublishEvent(context.Background(),
-		"plugin.continuum.support."+name, payload); err != nil && d.Logger != nil {
+		"plugin.silo.support."+name, payload); err != nil && d.Logger != nil {
 		d.Logger.Warn("ticket event publish failed", "event", name, "err", err)
 	}
 }

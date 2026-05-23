@@ -1,11 +1,11 @@
-BINARY := continuum-plugin-support
+BINARY := silo-plugin-support
 GO ?= go
 PNPM ?= pnpm
 
 .PHONY: build web-deps web-build test test-go test-web clean
 
 build: web-build
-	$(GO) build -o $(BINARY) ./cmd/continuum-plugin-support
+	$(GO) build -o $(BINARY) ./cmd/silo-plugin-support
 
 web-deps:
 	cd web && $(PNPM) install --frozen-lockfile

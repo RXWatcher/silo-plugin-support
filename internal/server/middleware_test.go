@@ -26,7 +26,7 @@ func TestRequireUserAllowsKnownIdentity(t *testing.T) {
 	called := false
 	h := requireUser(func(http.ResponseWriter, *http.Request) { called = true })
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	req.Header.Set("X-Continuum-User-Id", "42")
+	req.Header.Set("X-Silo-User-Id", "42")
 	rec := httptest.NewRecorder()
 	h(rec, req)
 	if !called {
@@ -38,8 +38,8 @@ func TestRequireAdminBlocksNonAdmin(t *testing.T) {
 	called := false
 	h := requireAdmin(func(http.ResponseWriter, *http.Request) { called = true })
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	req.Header.Set("X-Continuum-User-Id", "42")
-	req.Header.Set("X-Continuum-User-Role", "user")
+	req.Header.Set("X-Silo-User-Id", "42")
+	req.Header.Set("X-Silo-User-Role", "user")
 	rec := httptest.NewRecorder()
 	h(rec, req)
 	if rec.Code != http.StatusForbidden {
@@ -54,8 +54,8 @@ func TestRequireAdminAllowsAdmin(t *testing.T) {
 	called := false
 	h := requireAdmin(func(http.ResponseWriter, *http.Request) { called = true })
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	req.Header.Set("X-Continuum-User-Id", "1")
-	req.Header.Set("X-Continuum-User-Role", "admin")
+	req.Header.Set("X-Silo-User-Id", "1")
+	req.Header.Set("X-Silo-User-Role", "admin")
 	rec := httptest.NewRecorder()
 	h(rec, req)
 	if !called {

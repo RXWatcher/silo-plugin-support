@@ -1,4 +1,4 @@
-module github.com/RXWatcher/continuum-plugin-support
+module github.com/RXWatcher/silo-plugin-support
 
 go 1.26.0
 

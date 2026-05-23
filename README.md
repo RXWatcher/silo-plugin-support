@@ -1,10 +1,10 @@
-# Support for Continuum
+# Support for Silo
 
-`continuum.support` is the customer-facing support surface for a Continuum deployment — one Go binary plus an embedded React SPA serving four modules under a shared shell. Versioned 0.4.0; the manifest version maps to module shipping milestones rather than API stability.
+`silo.support` is the customer-facing support surface for a Silo deployment — one Go binary plus an embedded React SPA serving four modules under a shared shell. Versioned 0.4.0; the manifest version maps to module shipping milestones rather than API stability.
 
 ## Category
 
-Lives under **Operations** alongside [`continuum.notifications`](https://github.com/RXWatcher/continuum-plugin-notifications) and [`continuum.stream-dashboard`](https://github.com/RXWatcher/continuum-plugin-stream-dashboard).
+Lives under **Operations** alongside [`silo.notifications`](https://github.com/RXWatcher/silo-plugin-notifications) and [`silo.stream-dashboard`](https://github.com/RXWatcher/silo-plugin-stream-dashboard).
 
 ## Capabilities
 
@@ -16,11 +16,11 @@ The capability registers ~45 routes spanning the shared shell (`/`, `/admin`, `/
 
 ## Dependencies
 
-Standalone. The plugin is a self-contained customer-facing surface — it mounts its own chi router behind the host's per-installation path and embeds its SPA build. It emits events to the host's event bus; routing those events into email / push / chat is the operator's responsibility (typically via [`continuum.notifications`](https://github.com/RXWatcher/continuum-plugin-notifications)), but the support plugin itself has no hard dependency on any other plugin.
+Standalone. The plugin is a self-contained customer-facing surface — it mounts its own chi router behind the host's per-installation path and embeds its SPA build. It emits events to the host's event bus; routing those events into email / push / chat is the operator's responsibility (typically via [`silo.notifications`](https://github.com/RXWatcher/silo-plugin-notifications)), but the support plugin itself has no hard dependency on any other plugin.
 
-Auth flows through `X-Continuum-User-Id` and `X-Continuum-User-Role` headers injected by the host.
+Auth flows through `X-Silo-User-Id` and `X-Silo-User-Role` headers injected by the host.
 
-Host: [`ContinuumApp/continuum`](https://github.com/ContinuumApp/continuum). SDK: [`ContinuumApp/continuum-plugin-sdk`](https://github.com/ContinuumApp/continuum-plugin-sdk).
+Host: [`ContinuumApp/silo`](https://github.com/ContinuumApp/silo). SDK: [`ContinuumApp/continuum-plugin-sdk`](https://github.com/ContinuumApp/continuum-plugin-sdk).
 
 ## External services
 
@@ -47,7 +47,7 @@ The 0.x line reflects that the program is still early: each module shipped with 
 The plugin requires a single global config key, `database_url`, declared in the manifest as a required password-input admin form field:
 
 ```text
-postgres://plugin_support:...@host:5432/continuum?search_path=support&sslmode=disable
+postgres://plugin_support:...@host:5432/silo?search_path=support&sslmode=disable
 ```
 
 All further configuration lives in the singleton `app_config` row, managed via the shell's admin UI and the `GET/PATCH /api/admin/config` endpoints:
@@ -79,4 +79,4 @@ make build   # builds the SPA (pnpm) then the Go binary
 make test    # go test ./... + pnpm test
 ```
 
-CI builds linux-amd64 binaries on push to main via the reusable workflow in [RXWatcher/continuum-plugin-repository](https://github.com/RXWatcher/continuum-plugin-repository) and publishes them to the catalog at [`./binaries/`](https://github.com/RXWatcher/continuum-plugin-repository/tree/main/binaries).
+CI builds linux-amd64 binaries on push to main via the reusable workflow in [RXWatcher/silo-plugin-repository](https://github.com/RXWatcher/silo-plugin-repository) and publishes them to the catalog at [`./binaries/`](https://github.com/RXWatcher/silo-plugin-repository/tree/main/binaries).

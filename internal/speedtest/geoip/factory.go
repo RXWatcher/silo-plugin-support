@@ -3,7 +3,7 @@ package geoip
 import (
 	"fmt"
 
-	"github.com/RXWatcher/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/silo-plugin-support/internal/store"
 )
 
 // BuildSource constructs a concrete Source from a store row.

@@ -22,8 +22,8 @@ Check, in order:
 
 ## All requests return 401 `unauthenticated`
 
-The host is not injecting `X-Continuum-User-Id`. The plugin
-strips any incoming `X-Continuum-*` header on the way in
+The host is not injecting `X-Silo-User-Id`. The plugin
+strips any incoming `X-Silo-*` header on the way in
 (see `httproutes.Server.ServeHTTP`) and relies on the host to
 re-inject it after auth. If the host edge is misconfigured (no
 auth middleware, or a session cookie that the auth layer doesn't
@@ -35,7 +35,7 @@ plugin.
 
 ## All admin routes return 403 `forbidden`
 
-`X-Continuum-User-Role` is something other than `admin`. The
+`X-Silo-User-Role` is something other than `admin`. The
 plugin compares with an exact string equal — `Admin`, `ADMIN`,
 or `administrator` will all be rejected. This is a deliberate
 narrow contract.

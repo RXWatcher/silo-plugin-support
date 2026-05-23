@@ -12,8 +12,8 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/RXWatcher/continuum-plugin-support/internal/migrate"
-	"github.com/RXWatcher/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/silo-plugin-support/internal/migrate"
+	"github.com/RXWatcher/silo-plugin-support/internal/store"
 )
 
 // kbTestDeps spins a real Postgres-backed Store. Skips the calling
@@ -59,7 +59,7 @@ func TestKBAdminRoutesRejectNonAdmin(t *testing.T) {
 		"/api/admin/kb/tags",
 	} {
 		req := httptest.NewRequest(http.MethodGet, path, nil)
-		req.Header.Set("X-Continuum-User-Id", "42")
+		req.Header.Set("X-Silo-User-Id", "42")
 		rec := httptest.NewRecorder()
 		h.ServeHTTP(rec, req)
 		if rec.Code != http.StatusForbidden {
@@ -81,8 +81,8 @@ func TestKBArticleCRUDRoundTrip(t *testing.T) {
 
 	body := fmt.Sprintf(`{"title":"Hello","categoryId":%d,"bodyHtml":"<p>hi</p>","status":"draft","tagLabels":["beta"]}`, cat.ID)
 	req := httptest.NewRequest(http.MethodPost, "/api/admin/kb/articles", bytes.NewBufferString(body))
-	req.Header.Set("X-Continuum-User-Id", "1")
-	req.Header.Set("X-Continuum-User-Role", "admin")
+	req.Header.Set("X-Silo-User-Id", "1")
+	req.Header.Set("X-Silo-User-Role", "admin")
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {
@@ -99,8 +99,8 @@ func TestKBArticleCRUDRoundTrip(t *testing.T) {
 	// Publish.
 	req = httptest.NewRequest(http.MethodPost,
 		fmt.Sprintf("/api/admin/kb/articles/%d/publish", created.ID), nil)
-	req.Header.Set("X-Continuum-User-Id", "1")
-	req.Header.Set("X-Continuum-User-Role", "admin")
+	req.Header.Set("X-Silo-User-Id", "1")
+	req.Header.Set("X-Silo-User-Role", "admin")
 	rec = httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {
@@ -109,7 +109,7 @@ func TestKBArticleCRUDRoundTrip(t *testing.T) {
 
 	// Customer detail returns it.
 	req = httptest.NewRequest(http.MethodGet, "/api/customer/kb/articles/hello", nil)
-	req.Header.Set("X-Continuum-User-Id", "9")
+	req.Header.Set("X-Silo-User-Id", "9")
 	rec = httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {
@@ -119,7 +119,7 @@ func TestKBArticleCRUDRoundTrip(t *testing.T) {
 	// Customer vote.
 	req = httptest.NewRequest(http.MethodPost, "/api/customer/kb/articles/hello/vote",
 		bytes.NewBufferString(`{"vote":"up"}`))
-	req.Header.Set("X-Continuum-User-Id", "9")
+	req.Header.Set("X-Silo-User-Id", "9")
 	rec = httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {

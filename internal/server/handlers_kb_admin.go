@@ -9,9 +9,9 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/RXWatcher/continuum-plugin-support/internal/htmlx"
-	"github.com/RXWatcher/continuum-plugin-support/internal/kb"
-	"github.com/RXWatcher/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/silo-plugin-support/internal/htmlx"
+	"github.com/RXWatcher/silo-plugin-support/internal/kb"
+	"github.com/RXWatcher/silo-plugin-support/internal/store"
 )
 
 // Admin SPA shell handlers.
@@ -26,7 +26,7 @@ func adminSPAHandler(d Deps, mode string) http.HandlerFunc {
 			Mode:    mode,
 			Theme:   adminTheme(r),
 			Modules: currentModules(r.Context(), d),
-			UserID:  r.Header.Get("X-Continuum-User-Id"),
+			UserID:  r.Header.Get("X-Silo-User-Id"),
 			IsAdmin: true,
 		}, http.StatusOK)
 	}
@@ -172,7 +172,7 @@ func kbWriteArticle(w http.ResponseWriter, r *http.Request, d Deps, id int64) {
 		BodyText:     bodyText,
 		CategoryID:   req.CategoryID,
 		Status:       req.Status,
-		LastEditedBy: r.Header.Get("X-Continuum-User-Id"),
+		LastEditedBy: r.Header.Get("X-Silo-User-Id"),
 	}
 	if req.PublishAt != nil && *req.PublishAt != "" {
 		ts, perr := parseTime(*req.PublishAt)
@@ -244,7 +244,7 @@ func hKBAdminPublishArticle(d Deps) http.HandlerFunc {
 			writeErr(w, http.StatusBadRequest, "bad_id", "invalid article id")
 			return
 		}
-		saved, err := kbAdminStore(d).KBPublishArticle(r.Context(), id, r.Header.Get("X-Continuum-User-Id"))
+		saved, err := kbAdminStore(d).KBPublishArticle(r.Context(), id, r.Header.Get("X-Silo-User-Id"))
 		if errors.Is(err, store.ErrNotFound) {
 			writeErr(w, http.StatusNotFound, "kb_not_found", "article not found")
 			return
@@ -265,7 +265,7 @@ func hKBAdminUnpublishArticle(d Deps) http.HandlerFunc {
 			writeErr(w, http.StatusBadRequest, "bad_id", "invalid article id")
 			return
 		}
-		saved, err := kbAdminStore(d).KBUnpublishArticle(r.Context(), id, r.Header.Get("X-Continuum-User-Id"))
+		saved, err := kbAdminStore(d).KBUnpublishArticle(r.Context(), id, r.Header.Get("X-Silo-User-Id"))
 		if errors.Is(err, store.ErrNotFound) {
 			writeErr(w, http.StatusNotFound, "kb_not_found", "article not found")
 			return

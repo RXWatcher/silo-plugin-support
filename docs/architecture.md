@@ -10,7 +10,7 @@ its JSON APIs.
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│  cmd/continuum-plugin-support  (main: wiring, onConfig)      │
+│  cmd/silo-plugin-support  (main: wiring, onConfig)      │
 ├──────────────────────────────────────────────────────────────┤
 │  internal/runtime       SDK runtime, app_config defaults     │
 │  internal/migrate       golang-migrate, embedded SQL         │
@@ -60,12 +60,12 @@ attachments self-limit at 10 MB.
 
 The host injects two headers on every request after authentication:
 
-- `X-Continuum-User-Id` — present means "authenticated user". Empty
+- `X-Silo-User-Id` — present means "authenticated user". Empty
   on `requireUser` → 401 `unauthenticated`.
-- `X-Continuum-User-Role` — `admin` means "elevated". Anything else
+- `X-Silo-User-Role` — `admin` means "elevated". Anything else
   (including missing) on `requireAdmin` → 403 `forbidden`.
 
-The plugin actively strips any incoming `X-Continuum-*` header on
+The plugin actively strips any incoming `X-Silo-*` header on
 the `ServeHTTP` path before invoking chi, so a misconfigured edge
 can never spoof these from the outside. Internally, handlers read
 the headers directly via `r.Header.Get(...)`.
@@ -128,7 +128,7 @@ module from new traffic. Re-enabling it is instantaneous.
 The plugin emits events to the host event bus via the SDK; it does
 not deliver them. Routing those events into email, push, or chat
 is the operator's job (typically via
-[`continuum.notifications`](https://github.com/RXWatcher/continuum-plugin-notifications)).
+[`silo.notifications`](https://github.com/RXWatcher/silo-plugin-notifications)).
 
 Current event names:
 

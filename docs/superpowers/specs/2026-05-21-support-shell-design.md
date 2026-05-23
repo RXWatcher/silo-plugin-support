@@ -22,9 +22,9 @@ The shell has no business logic of its own. Its success criterion is
 
 ## Architecture
 
-Mirrors `continuum-plugin-public-catalog`'s shape exactly:
+Mirrors `silo-plugin-public-catalog`'s shape exactly:
 
-- One Go binary, served by the Continuum host through the SDK's
+- One Go binary, served by the Silo host through the SDK's
   `HttpRoutes` capability (no standalone listener; this is
   portal-internal).
 - One Postgres schema (`support`) — operator creates the schema and
@@ -36,8 +36,8 @@ Mirrors `continuum-plugin-public-catalog`'s shape exactly:
 ## File Layout
 
 ```
-continuum-plugin-support/
-├── cmd/continuum-plugin-support/
+silo-plugin-support/
+├── cmd/silo-plugin-support/
 │   ├── main.go
 │   └── manifest.json
 ├── internal/
@@ -77,10 +77,10 @@ continuum-plugin-support/
 
 ```json
 {
-  "plugin_id": "continuum.support",
+  "plugin_id": "silo.support",
   "version": "0.1.0",
   "category": "Operations",
-  "continuum_api_version": "v1",
+  "silo_api_version": "v1",
   "capabilities": [
     { "type": "http_routes.v1", "id": "support",
       "display_name": "Support",
@@ -172,7 +172,7 @@ pattern.
 ```go
 func requireUser(next http.HandlerFunc) http.HandlerFunc {
     return func(w http.ResponseWriter, r *http.Request) {
-        if r.Header.Get("X-Continuum-User-Id") == "" {
+        if r.Header.Get("X-Silo-User-Id") == "" {
             writeErr(w, http.StatusUnauthorized, "unauthenticated", "log in to continue")
             return
         }
@@ -182,11 +182,11 @@ func requireUser(next http.HandlerFunc) http.HandlerFunc {
 
 func requireAdmin(next http.HandlerFunc) http.HandlerFunc {
     return func(w http.ResponseWriter, r *http.Request) {
-        if r.Header.Get("X-Continuum-User-Id") == "" {
+        if r.Header.Get("X-Silo-User-Id") == "" {
             writeErr(w, http.StatusUnauthorized, "unauthenticated", "admin login required")
             return
         }
-        if r.Header.Get("X-Continuum-User-Role") != "admin" {
+        if r.Header.Get("X-Silo-User-Role") != "admin" {
             writeErr(w, http.StatusForbidden, "forbidden", "admin access required")
             return
         }
@@ -195,20 +195,20 @@ func requireAdmin(next http.HandlerFunc) http.HandlerFunc {
 }
 ```
 
-`httproutes/server.go` strips inbound `X-Continuum-*` headers on its
+`httproutes/server.go` strips inbound `X-Silo-*` headers on its
 `ServeHTTP` path (defence-in-depth in case a standalone listener is
 ever added later) — copied verbatim from public-catalog.
 
 ## Theming
 
-The `spa.go` shell renderer reads `X-Continuum-Theme` (or
-`X-Continuum-User-Theme`) and sets `data-theme="…"` on the rendered
+The `spa.go` shell renderer reads `X-Silo-Theme` (or
+`X-Silo-User-Theme`) and sets `data-theme="…"` on the rendered
 `<html>` tag. Default `midnight-cinema`.
 
 ```go
 func adminTheme(r *http.Request) string {
-    theme := r.Header.Get("X-Continuum-Theme")
-    if theme == "" { theme = r.Header.Get("X-Continuum-User-Theme") }
+    theme := r.Header.Get("X-Silo-Theme")
+    if theme == "" { theme = r.Header.Get("X-Silo-User-Theme") }
     if theme == "" { theme = "default" }
     return html.EscapeString(theme)
 }
@@ -371,11 +371,11 @@ These belong to module specs or to v2 of the program:
 
 - `make build` produces a working binary.
 - `make test` passes.
-- Plugin installs against a real Continuum host, both customer and
+- Plugin installs against a real Silo host, both customer and
   admin nav entries appear, both pages render with "Coming soon"
   module cards.
 - Admin can toggle a module on/off (toggle has no effect because no
   module is shipped, but the PATCH succeeds and the GET reflects the
   new state).
-- Auth gates verified: customer route → 401 without `X-Continuum-User-Id`,
+- Auth gates verified: customer route → 401 without `X-Silo-User-Id`,
   admin route → 403 without admin role.

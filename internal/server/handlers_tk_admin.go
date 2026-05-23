@@ -10,8 +10,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/RXWatcher/continuum-plugin-support/internal/store"
-	"github.com/RXWatcher/continuum-plugin-support/internal/tickets"
+	"github.com/RXWatcher/silo-plugin-support/internal/store"
+	"github.com/RXWatcher/silo-plugin-support/internal/tickets"
 )
 
 func tkAdminStore(d Deps) *store.Store {
@@ -35,7 +35,7 @@ func hTKAdminQueue(d Deps) http.HandlerFunc {
 			StatusGroup:   r.URL.Query().Get("statusGroup"),
 			CategoryID:    parseInt64(r.URL.Query().Get("categoryId")),
 			AssigneeID:    r.URL.Query().Get("assignee"),
-			CallerAdminID: r.Header.Get("X-Continuum-User-Id"),
+			CallerAdminID: r.Header.Get("X-Silo-User-Id"),
 			Search:        r.URL.Query().Get("q"),
 			Limit:         parseLimit(r.URL.Query().Get("limit"), 200),
 			Offset:        parseInt(r.URL.Query().Get("offset")),
@@ -101,7 +101,7 @@ func hTKAdminReply(d Deps) http.HandlerFunc {
 			writeErr(w, http.StatusBadRequest, "tk_empty_body", "reply body cannot be empty")
 			return
 		}
-		adminID := r.Header.Get("X-Continuum-User-Id")
+		adminID := r.Header.Get("X-Silo-User-Id")
 		entry, err := st.TKInsertEntryNoTx(r.Context(), store.TKEntry{
 			TicketID: t.ID, Kind: "reply", AuthorID: adminID, AuthorRole: "admin", Body: req.Body,
 		})
@@ -151,7 +151,7 @@ func hTKAdminNote(d Deps) http.HandlerFunc {
 		}
 		entry, err := st.TKInsertEntryNoTx(r.Context(), store.TKEntry{
 			TicketID: t.ID, Kind: "internal_note",
-			AuthorID: r.Header.Get("X-Continuum-User-Id"), AuthorRole: "admin", Body: req.Body,
+			AuthorID: r.Header.Get("X-Silo-User-Id"), AuthorRole: "admin", Body: req.Body,
 		})
 		if err != nil {
 			writeInternal(w, r, d, "tk_note_failed", err)
@@ -183,7 +183,7 @@ func hTKAdminStatus(d Deps) http.HandlerFunc {
 			writeErr(w, http.StatusConflict, "tk_bad_transition", err.Error())
 			return
 		}
-		adminID := r.Header.Get("X-Continuum-User-Id")
+		adminID := r.Header.Get("X-Silo-User-Id")
 		updated, err := st.TKUpdateTicketStatus(r.Context(), t.ID, req.To, nil, nil)
 		if err != nil {
 			writeInternal(w, r, d, "tk_status_failed", err)

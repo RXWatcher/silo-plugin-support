@@ -41,14 +41,14 @@ written at planning time.
 **Status:** Program-level spec. Per-module designs (Knowledge Base, Speedtest, Tickets, AI Assistance) follow as separate documents under this same `specs/` directory and are each their own brainstorm → spec → plan → implementation cycle.
 
 **Date:** 2026-05-21
-**Plugin id:** `continuum.support`
-**Repo:** `continuum-plugin-support` (sibling to the other first-party plugins)
+**Plugin id:** `silo.support`
+**Repo:** `silo-plugin-support` (sibling to the other first-party plugins)
 
 ## Purpose
 
-A single Continuum plugin that bundles the customer-facing support tools — connection diagnostics (speedtest), self-serve answers (knowledge base), and a typed ticket intake — behind one cohesive "Support" surface in the customer portal, with an operator dashboard for staff. AI assistance is a fifth module that consumes the other three's data and only ships after they have real content.
+A single Silo plugin that bundles the customer-facing support tools — connection diagnostics (speedtest), self-serve answers (knowledge base), and a typed ticket intake — behind one cohesive "Support" surface in the customer portal, with an operator dashboard for staff. AI assistance is a fifth module that consumes the other three's data and only ships after they have real content.
 
-A customer in trouble should never have to figure out which Continuum plugin to open. They click "Support" once and the right tool is in front of them.
+A customer in trouble should never have to figure out which Silo plugin to open. They click "Support" once and the right tool is in front of them.
 
 ## Decomposition
 
@@ -77,7 +77,7 @@ Each module after the shell is its own design + plan + implementation pass. The 
 
 ### Plugin shape
 
-One Go binary, one React/TS SPA, one Postgres schema (`support`). Mirrors the architecture of `continuum-plugin-public-catalog`:
+One Go binary, one React/TS SPA, one Postgres schema (`support`). Mirrors the architecture of `silo-plugin-public-catalog`:
 
 - Manifest declares all routes for all modules in one place.
 - The SPA dispatches by a server-baked bootstrap mode (`mode: 'support-home' | 'kb-browse' | 'kb-article' | 'speedtest' | 'tickets-list' | 'tickets-detail' | 'admin' | ...`) — no client-side router.
@@ -90,9 +90,9 @@ This means the binary grows with each module, but the deployment story stays "on
 
 Match the public-catalog pattern exactly:
 
-- The Continuum host stamps `X-Continuum-User-Id` and `X-Continuum-User-Role` on inbound requests it has authenticated.
+- The Silo host stamps `X-Silo-User-Id` and `X-Silo-User-Role` on inbound requests it has authenticated.
 - Manifest `http_routes` declare `access: "user"` for customer-facing routes and `access: "admin"` for operator routes.
-- The plugin's `requireUser` and `requireAdmin` middleware reads the header. The standalone-listener path (if we expose one) strips `X-Continuum-*` headers so the gates can't be spoofed — same defence as public-catalog.
+- The plugin's `requireUser` and `requireAdmin` middleware reads the header. The standalone-listener path (if we expose one) strips `X-Silo-*` headers so the gates can't be spoofed — same defence as public-catalog.
 
 No anonymous surface in v1; every route requires either a logged-in customer or an admin.
 
@@ -109,7 +109,7 @@ Inside the SPA, a left-rail (or top-tab) component renders the module nav: Home 
 
 ### Theming
 
-Inherit `X-Continuum-Theme` from the request, default to `midnight-cinema` (matches public-catalog). Tailwind v4 + shadcn primitives; same dependency set as the other first-party plugins.
+Inherit `X-Silo-Theme` from the request, default to `midnight-cinema` (matches public-catalog). Tailwind v4 + shadcn primitives; same dependency set as the other first-party plugins.
 
 ### Schema isolation
 
@@ -129,7 +129,7 @@ These are implementation-affordances, not features that gate any module's ship. 
 
 ### Host SDK use
 
-- Customer identity for `requireUser` middleware (`X-Continuum-User-Id`).
+- Customer identity for `requireUser` middleware (`X-Silo-User-Id`).
 - Customer's assigned streaming server for the speedtest "Your server" dropdown entry (requires SDK accessor — verify pre-deploy).
 - Federation to other plugins for cross-data lookups (e.g., billing-related ticket → query WHMCS plugin for invoice state). Cross-plugin calls go through the SDK's `CallPluginJSON` the way public-catalog talks to ebook/audiobook plugins.
 
@@ -166,7 +166,7 @@ First feature: at ticket creation, embed-search the KB for the typed description
 - **Inbound email-to-ticket** — tickets are opened from the customer UI, not by email. Outbound status emails only.
 - **Per-customer ticket assignment ("your agent is X")** — round-robin / unassigned queue is fine for v1.
 - **AI conversation / chatbot** — only suggestion + categorisation in v1 of the AI module.
-- **Federation across multiple Continuum installs** — single-install scope.
+- **Federation across multiple Silo installs** — single-install scope.
 
 ## Open Questions (deferred to per-module brainstorms)
 

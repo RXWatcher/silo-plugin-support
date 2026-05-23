@@ -9,8 +9,8 @@ func hCustomerHome(d Deps) http.HandlerFunc {
 			Mode:    "customer-home",
 			Theme:   adminTheme(r),
 			Modules: modules,
-			UserID:  r.Header.Get("X-Continuum-User-Id"),
-			IsAdmin: r.Header.Get("X-Continuum-User-Role") == "admin",
+			UserID:  r.Header.Get("X-Silo-User-Id"),
+			IsAdmin: r.Header.Get("X-Silo-User-Role") == "admin",
 		}, http.StatusOK)
 	}
 }
@@ -20,8 +20,8 @@ func hCustomerBootstrap(d Deps) http.HandlerFunc {
 		modules := currentModules(r.Context(), d)
 		writeJSON(w, http.StatusOK, map[string]any{
 			"modules": modules,
-			"userId":  r.Header.Get("X-Continuum-User-Id"),
-			"isAdmin": r.Header.Get("X-Continuum-User-Role") == "admin",
+			"userId":  r.Header.Get("X-Silo-User-Id"),
+			"isAdmin": r.Header.Get("X-Silo-User-Role") == "admin",
 		})
 	}
 }

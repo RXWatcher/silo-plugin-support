@@ -9,7 +9,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/RXWatcher/continuum-plugin-support/internal/store"
+	"github.com/RXWatcher/silo-plugin-support/internal/store"
 )
 
 const tkAttachmentMaxBytes = 10 << 20 // 10 MB
@@ -28,12 +28,12 @@ func hTKUploadAttachment(d Deps) http.HandlerFunc {
 		if err != nil {
 			writeInternal(w, r, d, "tk_entry_get_failed", err); return
 		}
-		if r.Header.Get("X-Continuum-User-Role") != "admin" {
+		if r.Header.Get("X-Silo-User-Role") != "admin" {
 			ticket, err := st.TKGetTicketByID(r.Context(), entry.TicketID)
 			if err != nil {
 				writeInternal(w, r, d, "tk_ticket_get_failed", err); return
 			}
-			if ticket.CustomerID != r.Header.Get("X-Continuum-User-Id") {
+			if ticket.CustomerID != r.Header.Get("X-Silo-User-Id") {
 				writeErr(w, http.StatusForbidden, "tk_forbidden", "not your ticket"); return
 			}
 		}
@@ -85,7 +85,7 @@ func hTKServeAttachment(d Deps) http.HandlerFunc {
 		if err != nil {
 			writeInternal(w, r, d, "tk_attachment_get_failed", err); return
 		}
-		if r.Header.Get("X-Continuum-User-Role") != "admin" {
+		if r.Header.Get("X-Silo-User-Role") != "admin" {
 			entry, err := st.TKGetEntry(r.Context(), att.EntryID)
 			if err != nil {
 				writeInternal(w, r, d, "tk_entry_get_failed", err); return
@@ -94,7 +94,7 @@ func hTKServeAttachment(d Deps) http.HandlerFunc {
 			if err != nil {
 				writeInternal(w, r, d, "tk_ticket_get_failed", err); return
 			}
-			if ticket.CustomerID != r.Header.Get("X-Continuum-User-Id") {
+			if ticket.CustomerID != r.Header.Get("X-Silo-User-Id") {
 				http.NotFound(w, r); return
 			}
 		}

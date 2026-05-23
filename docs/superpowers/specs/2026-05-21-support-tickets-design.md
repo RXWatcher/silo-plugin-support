@@ -28,7 +28,7 @@ future swap if the operator outgrows v1.
   customer ticket list refetch every 30s while open.
 - **Postgres `bytea` attachments**, 10 MB cap per file. Shell adds a
   12 MB request body limit middleware.
-- **Email / push / chat notifications via the `continuum.notifications`
+- **Email / push / chat notifications via the `silo.notifications`
   plugin.** Tickets module emits well-formed events; operator wires
   delivery rules in the notifications admin. **Zero SMTP config in
   this module.**
@@ -79,7 +79,7 @@ CREATE TABLE tk_category_fields (
 CREATE TABLE tk_tickets (
     id                  BIGSERIAL PRIMARY KEY,
     tracking_number     TEXT NOT NULL UNIQUE,           -- 'SUP-247'
-    customer_id         TEXT NOT NULL,                  -- X-Continuum-User-Id
+    customer_id         TEXT NOT NULL,                  -- X-Silo-User-Id
     customer_email      TEXT NOT NULL,                  -- snapshot at create
     category_id         BIGINT NOT NULL REFERENCES tk_categories(id) ON DELETE RESTRICT,
     subcategory_id      BIGINT REFERENCES tk_subcategories(id) ON DELETE RESTRICT,
@@ -103,7 +103,7 @@ CREATE TABLE tk_ticket_entries (
     ticket_id   BIGINT NOT NULL REFERENCES tk_tickets(id) ON DELETE CASCADE,
     kind        TEXT NOT NULL
         CHECK (kind IN ('initial','reply','internal_note','status_change','system')),
-    author_id   TEXT NOT NULL,                          -- X-Continuum-User-Id or 'system'
+    author_id   TEXT NOT NULL,                          -- X-Silo-User-Id or 'system'
     author_role TEXT NOT NULL CHECK (author_role IN ('customer','admin','system')),
     body        TEXT NOT NULL,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -280,7 +280,7 @@ per-module sidebar pattern).
 ### Detail page
 
 - Top: tracking number + subject + status badge + category +
-  customer info (email, Continuum user id, "Last speedtest: 220 Mbps,
+  customer info (email, Silo user id, "Last speedtest: 220 Mbps,
   3 min ago" — only when the speedtest module is enabled; missing
   module is silent, not error).
 - Field values panel (per-category field key/value pairs).
@@ -325,13 +325,13 @@ Per-event extras:
 
 | Event | Extra payload keys |
 |---|---|
-| `plugin.continuum.support.ticket_submitted` | — |
-| `plugin.continuum.support.ticket_replied` | `author_role`, `author_id`, `excerpt` (first 280 chars) |
-| `plugin.continuum.support.ticket_status_changed` | `from`, `to`, `by` (admin id or "customer" or "system") |
-| `plugin.continuum.support.ticket_assigned` | `from_admin_id` (null), `to_admin_id` |
-| `plugin.continuum.support.ticket_resolved` | `by` |
-| `plugin.continuum.support.ticket_reopened` | `by` (always "customer" in v1) |
-| `plugin.continuum.support.ticket_closed` | `by` (admin id or "system") |
+| `plugin.silo.support.ticket_submitted` | — |
+| `plugin.silo.support.ticket_replied` | `author_role`, `author_id`, `excerpt` (first 280 chars) |
+| `plugin.silo.support.ticket_status_changed` | `from`, `to`, `by` (admin id or "customer" or "system") |
+| `plugin.silo.support.ticket_assigned` | `from_admin_id` (null), `to_admin_id` |
+| `plugin.silo.support.ticket_resolved` | `by` |
+| `plugin.silo.support.ticket_reopened` | `by` (always "customer" in v1) |
+| `plugin.silo.support.ticket_closed` | `by` (admin id or "system") |
 
 Notifications plugin admin defines per-event delivery rules. No
 SMTP / push configuration lives in this module.
@@ -455,7 +455,7 @@ than re-opening the shell spec:
   reply, leave internal notes, change status, and assign.
 - Tracking numbers are unique and monotonically increasing under
   concurrent creation.
-- A new ticket fires `plugin.continuum.support.ticket_submitted` with
+- A new ticket fires `plugin.silo.support.ticket_submitted` with
   the documented payload, and the notifications plugin (configured
   with a rule) delivers an email to the customer-email-snapshot
   address.
