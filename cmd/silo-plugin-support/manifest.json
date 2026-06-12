@@ -23,7 +23,7 @@
       "id": "customer_home",
       "method": "GET",
       "path": "/",
-      "access": "user",
+      "access": "authenticated",
       "navigable": true,
       "navigation_label": "Support",
       "navigation_kind": "user"
@@ -32,7 +32,7 @@
       "id": "customer_bootstrap",
       "method": "GET",
       "path": "/api/customer/bootstrap",
-      "access": "user"
+      "access": "authenticated"
     },
     {
       "id": "admin_page",
@@ -59,49 +59,49 @@
       "id": "kb_browse",
       "method": "GET",
       "path": "/kb",
-      "access": "user"
+      "access": "authenticated"
     },
     {
       "id": "kb_detail",
       "method": "GET",
       "path": "/kb/*",
-      "access": "user"
+      "access": "authenticated"
     },
     {
       "id": "kb_api_list",
       "method": "GET",
       "path": "/api/customer/kb/articles",
-      "access": "user"
+      "access": "authenticated"
     },
     {
       "id": "kb_api_detail",
       "method": "GET",
       "path": "/api/customer/kb/articles/*",
-      "access": "user"
+      "access": "authenticated"
     },
     {
       "id": "kb_api_related",
       "method": "GET",
       "path": "/api/customer/kb/related/*",
-      "access": "user"
+      "access": "authenticated"
     },
     {
       "id": "kb_api_search",
       "method": "GET",
       "path": "/api/customer/kb/search",
-      "access": "user"
+      "access": "authenticated"
     },
     {
       "id": "kb_api_vote",
       "method": "POST",
       "path": "/api/customer/kb/articles/*",
-      "access": "user"
+      "access": "authenticated"
     },
     {
       "id": "kb_image_serve",
       "method": "GET",
       "path": "/api/kb/images/*",
-      "access": "user"
+      "access": "authenticated"
     },
     {
       "id": "kb_admin_list",
@@ -125,25 +125,25 @@
       "id": "st_browse",
       "method": "GET",
       "path": "/speedtest",
-      "access": "user"
+      "access": "authenticated"
     },
     {
       "id": "st_api_endpoints",
       "method": "GET",
       "path": "/api/customer/speedtest/endpoints",
-      "access": "user"
+      "access": "authenticated"
     },
     {
       "id": "st_api_auto",
       "method": "GET",
       "path": "/api/customer/speedtest/auto",
-      "access": "user"
+      "access": "authenticated"
     },
     {
       "id": "st_api_results",
       "method": "*",
       "path": "/api/customer/speedtest/results",
-      "access": "user"
+      "access": "authenticated"
     },
     {
       "id": "st_admin_pages",
@@ -167,31 +167,31 @@
       "id": "tk_list",
       "method": "GET",
       "path": "/tickets",
-      "access": "user"
+      "access": "authenticated"
     },
     {
       "id": "tk_detail",
       "method": "GET",
       "path": "/tickets/*",
-      "access": "user"
+      "access": "authenticated"
     },
     {
       "id": "tk_api_customer",
       "method": "*",
       "path": "/api/customer/tickets",
-      "access": "user"
+      "access": "authenticated"
     },
     {
       "id": "tk_api_customer2",
       "method": "*",
       "path": "/api/customer/tickets/*",
-      "access": "user"
+      "access": "authenticated"
     },
     {
       "id": "tk_api_cats",
       "method": "GET",
       "path": "/api/customer/categories",
-      "access": "user"
+      "access": "authenticated"
     },
     {
       "id": "tk_admin_root",
@@ -257,13 +257,13 @@
       "id": "tk_attach_upload",
       "method": "POST",
       "path": "/api/tickets/entries/*",
-      "access": "user"
+      "access": "authenticated"
     },
     {
       "id": "tk_attach_serve",
       "method": "GET",
       "path": "/api/attachments/*",
-      "access": "user"
+      "access": "authenticated"
     }
   ],
   "global_config_schema": [

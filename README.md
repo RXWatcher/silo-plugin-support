@@ -20,7 +20,7 @@ Standalone. The plugin is a self-contained customer-facing surface — it mounts
 
 Auth flows through `X-Silo-User-Id` and `X-Silo-User-Role` headers injected by the host.
 
-Host: [`ContinuumApp/silo`](https://github.com/ContinuumApp/silo). SDK: [`ContinuumApp/continuum-plugin-sdk`](https://github.com/ContinuumApp/continuum-plugin-sdk).
+Host: [`Silo-Server/silo-server`](https://github.com/Silo-Server/silo-server). SDK: [`Silo-Server/silo-plugin-sdk`](https://github.com/Silo-Server/silo-plugin-sdk).
 
 ## External services
 
