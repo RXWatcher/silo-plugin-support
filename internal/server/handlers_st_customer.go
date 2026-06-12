@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"net"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/RXWatcher/silo-plugin-support/internal/speedtest"
@@ -140,15 +139,13 @@ func hSTCustomerHistory(d Deps) http.HandlerFunc {
 	}
 }
 
-// clientIP returns the best-guess client IP, preferring X-Forwarded-For's
-// first entry when present (Silo runs behind a reverse proxy).
+// clientIP returns the client IP from the connection's RemoteAddr, the
+// only hop the proxy in front of us cannot let a client spoof. The
+// X-Forwarded-For *first* entry is fully attacker-controlled (anyone can
+// send the header), so it is deliberately NOT trusted here. If a trusted
+// proxy chain is ever introduced, the validated hop should be threaded
+// through explicitly rather than parsed from raw XFF.
 func clientIP(r *http.Request) string {
-	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-		if i := strings.IndexByte(xff, ','); i > 0 {
-			return strings.TrimSpace(xff[:i])
-		}
-		return strings.TrimSpace(xff)
-	}
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		return r.RemoteAddr

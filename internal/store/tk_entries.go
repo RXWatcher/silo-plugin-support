@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -78,6 +79,27 @@ func (s *Store) TKListEntries(ctx context.Context, ticketID int64, customerView 
 		out[i].Attachments = atts
 	}
 	return out, nil
+}
+
+// TKLastCustomerActionAt returns the most recent time this customer
+// created a ticket or authored a ticket entry, or zero time if never.
+// Used by the per-customer create/reply rate limit.
+func (s *Store) TKLastCustomerActionAt(ctx context.Context, customerID string) (time.Time, error) {
+	var t *time.Time
+	err := s.pool.QueryRow(ctx, `
+		SELECT MAX(at) FROM (
+			SELECT created_at AS at FROM tk_tickets WHERE customer_id = $1
+			UNION ALL
+			SELECT created_at AS at FROM tk_ticket_entries
+			WHERE author_role = 'customer' AND author_id = $1
+		) actions`, customerID).Scan(&t)
+	if errors.Is(err, pgx.ErrNoRows) || t == nil {
+		return time.Time{}, nil
+	}
+	if err != nil {
+		return time.Time{}, fmt.Errorf("tk last customer action at: %w", err)
+	}
+	return *t, nil
 }
 
 func (s *Store) TKGetEntry(ctx context.Context, id int64) (TKEntry, error) {

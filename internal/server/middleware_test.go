@@ -76,7 +76,7 @@ func TestSecurityHeadersApplyOnEveryResponse(t *testing.T) {
 		"Referrer-Policy":         "no-referrer",
 		"X-Frame-Options":         "DENY",
 		"Permissions-Policy":      "camera=(), microphone=(), geolocation=()",
-		"Content-Security-Policy": "base-uri 'none'; frame-ancestors 'none'",
+		"Content-Security-Policy": "default-src 'self'; script-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'",
 	} {
 		if got := rec.Header().Get(k); got != want {
 			t.Errorf("%s = %q, want %q", k, got, want)

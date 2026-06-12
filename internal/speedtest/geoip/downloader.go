@@ -12,6 +12,8 @@ import (
 	"time"
 
 	"github.com/oschwald/geoip2-golang"
+
+	"github.com/RXWatcher/silo-plugin-support/internal/safeurl"
 )
 
 // downloadMMDB fetches the .mmdb (or .mmdb.gz) at url, validates by
@@ -36,6 +38,12 @@ func downloadMMDB(ctx context.Context, urlPattern, dest string) error {
 }
 
 func tryDownload(ctx context.Context, url, dest string) error {
+	// SSRF guard: the URL comes from admin-configured source config, so
+	// block schemes and private/loopback/link-local targets before we
+	// dial out.
+	if err := safeurl.Validate(url); err != nil {
+		return fmt.Errorf("unsafe mmdb url: %w", err)
+	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return err

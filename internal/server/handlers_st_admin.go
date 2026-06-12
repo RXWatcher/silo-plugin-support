@@ -13,6 +13,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
+	"github.com/RXWatcher/silo-plugin-support/internal/safeurl"
 	"github.com/RXWatcher/silo-plugin-support/internal/speedtest/geoip"
 	"github.com/RXWatcher/silo-plugin-support/internal/store"
 )
@@ -138,9 +139,14 @@ func hSTAdminPingEndpoint(d Deps) http.HandlerFunc {
 			writeInternal(w, r, d, "st_endpoint_get_failed", err)
 			return
 		}
+		target := ep.URL + "/empty.php"
+		if err := safeurl.Validate(target); err != nil {
+			writeErr(w, http.StatusBadRequest, "st_endpoint_unsafe_url", "endpoint URL is not a permitted target: "+err.Error())
+			return
+		}
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
-		req, _ := http.NewRequestWithContext(ctx, http.MethodHead, ep.URL+"/empty.php", nil)
+		req, _ := http.NewRequestWithContext(ctx, http.MethodHead, target, nil)
 		client := &http.Client{Timeout: 5 * time.Second}
 		start := time.Now()
 		resp, err := client.Do(req)

@@ -5,13 +5,56 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"net/mail"
 	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 
 	"github.com/RXWatcher/silo-plugin-support/internal/store"
 	"github.com/RXWatcher/silo-plugin-support/internal/tickets"
 )
+
+// tkCustomerActionMinInterval is the minimum spacing between
+// customer-originated ticket actions (create / reply). Mirrors the
+// speedtest module's per-customer guard.
+const tkCustomerActionMinInterval = 20 * time.Second
+
+// tkRateLimit enforces a per-customer minimum interval between ticket
+// create/reply actions. Returns true if the request was rate limited
+// (and an error response has already been written).
+func tkRateLimit(w http.ResponseWriter, r *http.Request, d Deps, customerID string) bool {
+	st := tkCustomerStore(d)
+	if st == nil {
+		return false
+	}
+	last, err := st.TKLastCustomerActionAt(r.Context(), customerID)
+	if err != nil {
+		writeInternal(w, r, d, "tk_rate_check_failed", err)
+		return true
+	}
+	if !last.IsZero() {
+		if since := time.Since(last); since < tkCustomerActionMinInterval {
+			retryIn := int((tkCustomerActionMinInterval - since).Seconds()) + 1
+			writeErr(w, http.StatusTooManyRequests, "tk_rate_limited",
+				"please wait "+ts(retryIn)+" before submitting another message")
+			return true
+		}
+	}
+	return false
+}
+
+// validCustomerEmail validates that s parses as a single RFC 5322
+// address. The address is treated purely as untrusted display data;
+// it is never used as an identity key or notification target.
+func validCustomerEmail(s string) bool {
+	s = strings.TrimSpace(s)
+	if s == "" || len(s) > 254 {
+		return false
+	}
+	addr, err := mail.ParseAddress(s)
+	return err == nil && addr.Address == s
+}
 
 func tkCustomerStore(d Deps) *store.Store {
 	if cs, ok := d.ConfigStore.(*store.Store); ok {
@@ -178,9 +221,29 @@ func hTKCustomerCreate(d Deps) http.HandlerFunc {
 			writeErr(w, http.StatusBadRequest, "tk_bad_ticket", "subject, body, and categoryId are required")
 			return
 		}
-		if strings.TrimSpace(req.CustomerEmail) == "" {
-			writeErr(w, http.StatusBadRequest, "tk_bad_email", "customerEmail is required")
+
+		customerID := r.Header.Get("X-Silo-User-Id")
+		if tkRateLimit(w, r, d, customerID) {
 			return
+		}
+
+		// Prefer a host-provided email (trusted, tied to the authenticated
+		// identity) when available. Fall back to the client-supplied value
+		// only as untrusted display data, and only if it is well-formed.
+		// The customer email is never used as an identity key or
+		// notification target.
+		customerEmail := strings.TrimSpace(r.Header.Get("X-Silo-User-Email"))
+		if customerEmail == "" || !validCustomerEmail(customerEmail) {
+			clientEmail := strings.TrimSpace(req.CustomerEmail)
+			if clientEmail == "" {
+				writeErr(w, http.StatusBadRequest, "tk_bad_email", "customerEmail is required")
+				return
+			}
+			if !validCustomerEmail(clientEmail) {
+				writeErr(w, http.StatusBadRequest, "tk_bad_email", "customerEmail is not a valid email address")
+				return
+			}
+			customerEmail = clientEmail
 		}
 
 		st := tkCustomerStore(d)
@@ -212,8 +275,8 @@ func hTKCustomerCreate(d Deps) http.HandlerFunc {
 
 		saved, err := st.TKCreateTicket(r.Context(), tx, store.TKTicket{
 			TrackingNumber: tn,
-			CustomerID:     r.Header.Get("X-Silo-User-Id"),
-			CustomerEmail:  req.CustomerEmail,
+			CustomerID:     customerID,
+			CustomerEmail:  customerEmail,
 			CategoryID:     req.CategoryID,
 			SubcategoryID:  req.SubcategoryID,
 			Subject:        req.Subject,
@@ -289,6 +352,10 @@ func hTKCustomerReply(d Deps) http.HandlerFunc {
 		}
 		if strings.TrimSpace(req.Body) == "" {
 			writeErr(w, http.StatusBadRequest, "tk_empty_body", "reply body cannot be empty")
+			return
+		}
+
+		if tkRateLimit(w, r, d, t.CustomerID) {
 			return
 		}
 

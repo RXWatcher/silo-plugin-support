@@ -85,6 +85,16 @@ func currentModules(ctx context.Context, d Deps) pluginrt.ModuleToggles {
 	return cfg.Modules
 }
 
+// redactConfig returns a copy of cfg with secret-bearing fields masked
+// before the config is serialized back to an admin client. DatabaseURL
+// already carries json:"-" so it never serializes, but we mask it here
+// too as defense in depth and to cover any future secret fields.
 func redactConfig(cfg pluginrt.Config) pluginrt.Config {
-	return cfg
+	out := cfg
+	if out.DatabaseURL != "" {
+		out.DatabaseURL = redactedPlaceholder
+	}
+	return out
 }
+
+const redactedPlaceholder = "***redacted***"
