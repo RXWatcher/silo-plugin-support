@@ -34,6 +34,38 @@ func (s *Store) TKGetAttachment(ctx context.Context, id int64) (TKAttachment, er
 	return a, err
 }
 
+// TKCustomerAttachmentBytes returns the total number of bytes this
+// customer is currently storing across attachments on all of their
+// tickets. Used to enforce a per-customer storage quota.
+func (s *Store) TKCustomerAttachmentBytes(ctx context.Context, customerID string) (int64, error) {
+	var total int64
+	err := s.pool.QueryRow(ctx, `
+		SELECT COALESCE(SUM(a.bytes), 0)
+		FROM tk_attachments a
+		JOIN tk_ticket_entries e ON e.id = a.entry_id
+		JOIN tk_tickets t       ON t.id = e.ticket_id
+		WHERE t.customer_id = $1`, customerID).Scan(&total)
+	if err != nil {
+		return 0, fmt.Errorf("sum customer attachment bytes: %w", err)
+	}
+	return total, nil
+}
+
+// TKTicketAttachmentCount returns how many attachments exist across all
+// entries of a ticket. Used to cap attachments per ticket.
+func (s *Store) TKTicketAttachmentCount(ctx context.Context, ticketID int64) (int, error) {
+	var n int
+	err := s.pool.QueryRow(ctx, `
+		SELECT COUNT(*)
+		FROM tk_attachments a
+		JOIN tk_ticket_entries e ON e.id = a.entry_id
+		WHERE e.ticket_id = $1`, ticketID).Scan(&n)
+	if err != nil {
+		return 0, fmt.Errorf("count ticket attachments: %w", err)
+	}
+	return n, nil
+}
+
 func (s *Store) TKListEntryAttachments(ctx context.Context, entryID int64) ([]TKAttachmentMeta, error) {
 	rows, err := s.pool.Query(ctx, `
 		SELECT id, filename, mime, bytes, created_at

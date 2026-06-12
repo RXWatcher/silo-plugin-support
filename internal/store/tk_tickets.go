@@ -85,6 +85,21 @@ func (s *Store) TKGetTicketByID(ctx context.Context, id int64) (TKTicket, error)
 	return t, err
 }
 
+// TKCountOpenTicketsForCustomer returns how many non-terminal
+// (open / in_progress / waiting_customer) tickets a customer currently
+// has. Used to cap how many concurrent tickets one customer can open.
+func (s *Store) TKCountOpenTicketsForCustomer(ctx context.Context, customerID string) (int, error) {
+	var n int
+	err := s.pool.QueryRow(ctx, `
+		SELECT COUNT(*) FROM tk_tickets
+		WHERE customer_id = $1
+		  AND status IN ('open','in_progress','waiting_customer')`, customerID).Scan(&n)
+	if err != nil {
+		return 0, fmt.Errorf("count open tickets: %w", err)
+	}
+	return n, nil
+}
+
 func (s *Store) TKListTickets(ctx context.Context, f TKTicketListFilter) ([]TKTicket, error) {
 	if f.Limit <= 0 {
 		f.Limit = 100

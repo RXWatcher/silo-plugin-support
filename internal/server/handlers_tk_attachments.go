@@ -28,11 +28,27 @@ var tkAllowedAttachmentMIMEs = map[string]bool{
 	"text/plain":      true,
 }
 
+func tkMaxAttachmentsPerTicket(d Deps) int {
+	_, _, _, maxAtt, _ := d.tkLimits()
+	return maxAtt
+}
+
+func tkMaxStorageBytesPerCustomer(d Deps) int64 {
+	_, _, _, _, maxBytes := d.tkLimits()
+	return maxBytes
+}
+
 func hTKUploadAttachment(d Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		entryID, err := strconv.ParseInt(chi.URLParam(r, "entry_id"), 10, 64)
 		if err != nil || entryID <= 0 {
 			writeErr(w, http.StatusBadRequest, "bad_id", "invalid entry id"); return
+		}
+		// Reject obviously-oversized uploads up front, before any DB work,
+		// using the advertised Content-Length. The authoritative byte
+		// check still happens after the body is read below.
+		if r.ContentLength > tkAttachmentMaxBytes {
+			writeErr(w, http.StatusRequestEntityTooLarge, "tk_too_large", "attachment must be 10 MB or smaller"); return
 		}
 		st := tkCustomerStore(d)
 		entry, err := st.TKGetEntry(r.Context(), entryID)
@@ -42,12 +58,15 @@ func hTKUploadAttachment(d Deps) http.HandlerFunc {
 		if err != nil {
 			writeInternal(w, r, d, "tk_entry_get_failed", err); return
 		}
+		// Resolve the owning ticket once: needed for authz (customers),
+		// the per-ticket attachment-count cap, and per-customer storage
+		// quota.
+		ticket, err := st.TKGetTicketByID(r.Context(), entry.TicketID)
+		if err != nil {
+			writeInternal(w, r, d, "tk_ticket_get_failed", err); return
+		}
 		if r.Header.Get("X-Silo-User-Role") != "admin" {
 			userID := r.Header.Get("X-Silo-User-Id")
-			ticket, err := st.TKGetTicketByID(r.Context(), entry.TicketID)
-			if err != nil {
-				writeInternal(w, r, d, "tk_ticket_get_failed", err); return
-			}
 			if ticket.CustomerID != userID {
 				writeErr(w, http.StatusForbidden, "tk_forbidden", "not your ticket"); return
 			}
@@ -57,8 +76,17 @@ func hTKUploadAttachment(d Deps) http.HandlerFunc {
 				writeErr(w, http.StatusForbidden, "tk_forbidden", "you can only attach files to your own messages"); return
 			}
 		}
-		if r.ContentLength > tkAttachmentMaxBytes {
-			writeErr(w, http.StatusRequestEntityTooLarge, "tk_too_large", "attachment must be 10 MB or smaller"); return
+		// Per-ticket attachment-count cap. Applied to everyone (including
+		// admins) so a single ticket cannot accumulate unbounded blobs.
+		if max := tkMaxAttachmentsPerTicket(d); max > 0 {
+			count, err := st.TKTicketAttachmentCount(r.Context(), ticket.ID)
+			if err != nil {
+				writeInternal(w, r, d, "tk_attachment_count_failed", err); return
+			}
+			if count >= max {
+				writeErr(w, http.StatusConflict, "tk_too_many_attachments",
+					"this ticket has reached its attachment limit"); return
+			}
 		}
 		if err := r.ParseMultipartForm(tkAttachmentMaxBytes); err != nil {
 			writeErr(w, http.StatusBadRequest, "bad_multipart", "could not parse multipart body"); return
@@ -88,6 +116,20 @@ func hTKUploadAttachment(d Deps) http.HandlerFunc {
 		if !tkAllowedAttachmentMIMEs[mime] {
 			writeErr(w, http.StatusUnsupportedMediaType, "tk_bad_mime",
 				"attachment must be PNG, JPEG, GIF, WEBP, PDF, or plain text"); return
+		}
+		// Per-customer total-storage quota. Charged against the ticket's
+		// owner (the customer) regardless of whether the uploader is the
+		// customer or an admin replying on their behalf, so one customer's
+		// footprint stays bounded.
+		if quota := tkMaxStorageBytesPerCustomer(d); quota > 0 {
+			used, err := st.TKCustomerAttachmentBytes(r.Context(), ticket.CustomerID)
+			if err != nil {
+				writeInternal(w, r, d, "tk_attachment_quota_failed", err); return
+			}
+			if used+int64(len(body)) > quota {
+				writeErr(w, http.StatusInsufficientStorage, "tk_quota_exceeded",
+					"attachment storage quota exceeded for this customer"); return
+			}
 		}
 		sum := sha256.Sum256(body)
 		meta, err := st.TKInsertAttachment(r.Context(), store.TKAttachment{

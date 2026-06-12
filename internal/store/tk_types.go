@@ -93,6 +93,19 @@ type TKAttachment struct {
 	CreatedAt time.Time
 }
 
+// TKAuditEntry is an append-only record of an admin action that touches
+// customer PII (replies, notes, status changes, assignments). Detail
+// carries action-specific fields (e.g. from/to status) as JSON.
+type TKAuditEntry struct {
+	ID        int64          `json:"id"`
+	TicketID  int64          `json:"ticketId"`
+	ActorID   string         `json:"actorId"`
+	ActorRole string         `json:"actorRole"`
+	Action    string         `json:"action"`
+	Detail    map[string]any `json:"detail,omitempty"`
+	CreatedAt time.Time      `json:"createdAt"`
+}
+
 type TKTicketListFilter struct {
 	CustomerID    string
 	Status        string

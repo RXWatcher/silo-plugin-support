@@ -6,8 +6,10 @@ import (
 	"errors"
 	"net/http"
 	"net/mail"
+	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/go-chi/chi/v5"
 
@@ -42,6 +44,28 @@ func tkRateLimit(w http.ResponseWriter, r *http.Request, d Deps, customerID stri
 		}
 	}
 	return false
+}
+
+// tkValidateBody enforces the configured min/max length on a free-text
+// entry body (counted in runes, not bytes, so multibyte input is judged
+// by character count). It returns false and writes an error response if
+// the body is too short or too long. minChars <= 0 disables the minimum;
+// it is only applied on initial ticket creation where a meaningful
+// description is required — replies/notes pass minChars = 0.
+func tkValidateBody(w http.ResponseWriter, d Deps, body string, applyMin bool) bool {
+	_, minBody, maxBody, _, _ := d.tkLimits()
+	n := utf8.RuneCountInString(strings.TrimSpace(body))
+	if applyMin && minBody > 0 && n < minBody {
+		writeErr(w, http.StatusBadRequest, "tk_body_too_short",
+			"message must be at least "+strconv.Itoa(minBody)+" characters")
+		return false
+	}
+	if maxBody > 0 && n > maxBody {
+		writeErr(w, http.StatusRequestEntityTooLarge, "tk_body_too_long",
+			"message must be "+strconv.Itoa(maxBody)+" characters or fewer")
+		return false
+	}
+	return true
 }
 
 // validCustomerEmail validates that s parses as a single RFC 5322
@@ -221,10 +245,29 @@ func hTKCustomerCreate(d Deps) http.HandlerFunc {
 			writeErr(w, http.StatusBadRequest, "tk_bad_ticket", "subject, body, and categoryId are required")
 			return
 		}
+		if !tkValidateBody(w, d, req.Body, true) {
+			return
+		}
 
 		customerID := r.Header.Get("X-Silo-User-Id")
 		if tkRateLimit(w, r, d, customerID) {
 			return
+		}
+
+		// Per-customer open-ticket cap: reject creating a new ticket when
+		// the customer already has the configured number of non-terminal
+		// tickets. Curbs ticket-flooding beyond the per-action rate limit.
+		if maxOpen, _, _, _, _ := d.tkLimits(); maxOpen > 0 {
+			open, err := tkCustomerStore(d).TKCountOpenTicketsForCustomer(r.Context(), customerID)
+			if err != nil {
+				writeInternal(w, r, d, "tk_open_count_failed", err)
+				return
+			}
+			if open >= maxOpen {
+				writeErr(w, http.StatusTooManyRequests, "tk_too_many_open",
+					"you have too many open tickets; please wait for an existing ticket to be resolved")
+				return
+			}
 		}
 
 		// Prefer a host-provided email (trusted, tied to the authenticated
@@ -352,6 +395,9 @@ func hTKCustomerReply(d Deps) http.HandlerFunc {
 		}
 		if strings.TrimSpace(req.Body) == "" {
 			writeErr(w, http.StatusBadRequest, "tk_empty_body", "reply body cannot be empty")
+			return
+		}
+		if !tkValidateBody(w, d, req.Body, false) {
 			return
 		}
 

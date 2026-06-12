@@ -21,6 +21,30 @@ func tkAdminStore(d Deps) *store.Store {
 	return nil
 }
 
+// tkAudit appends an immutable audit record for a PII-touching admin
+// action. It is best-effort: an audit-write failure is logged but never
+// fails or rolls back the action it describes (the action has already
+// been committed by the time we record it). The store is the only thing
+// that can persist the row, so a nil store (e.g. some tests) is a no-op.
+func tkAudit(ctx context.Context, d Deps, e store.TKAuditEntry) {
+	st := tkAdminStore(d)
+	if st == nil {
+		return
+	}
+	if err := st.TKInsertAudit(ctx, e); err != nil && d.Logger != nil {
+		d.Logger.Error("tk audit write failed",
+			"action", e.Action, "ticket_id", e.TicketID, "actor_id", e.ActorID, "err", err)
+	}
+}
+
+// derefStr renders an optional admin id for audit detail; nil → "".
+func derefStr(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
+}
+
 // Admin SPA shells.
 func hTKAdminQueuePage(d Deps) http.HandlerFunc      { return adminSPAHandler(d, "admin-tickets-queue") }
 func hTKAdminDetailPage(d Deps) http.HandlerFunc     { return adminSPAHandler(d, "admin-tickets-detail") }
@@ -71,7 +95,12 @@ func hTKAdminDetail(d Deps) http.HandlerFunc {
 			writeInternal(w, r, d, "tk_detail_failed", err)
 			return
 		}
-		writeJSON(w, http.StatusOK, map[string]any{"ticket": t, "entries": entries})
+		audit, err := st.TKListAudit(r.Context(), t.ID)
+		if err != nil {
+			writeInternal(w, r, d, "tk_detail_failed", err)
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"ticket": t, "entries": entries, "audit": audit})
 	}
 }
 
@@ -101,6 +130,9 @@ func hTKAdminReply(d Deps) http.HandlerFunc {
 			writeErr(w, http.StatusBadRequest, "tk_empty_body", "reply body cannot be empty")
 			return
 		}
+		if !tkValidateBody(w, d, req.Body, false) {
+			return
+		}
 		adminID := r.Header.Get("X-Silo-User-Id")
 		entry, err := st.TKInsertEntryNoTx(r.Context(), store.TKEntry{
 			TicketID: t.ID, Kind: "reply", AuthorID: adminID, AuthorRole: "admin", Body: req.Body,
@@ -109,6 +141,10 @@ func hTKAdminReply(d Deps) http.HandlerFunc {
 			writeInternal(w, r, d, "tk_reply_failed", err)
 			return
 		}
+		tkAudit(r.Context(), d, store.TKAuditEntry{
+			TicketID: t.ID, ActorID: adminID, Action: "reply",
+			Detail: map[string]any{"entry_id": entry.ID, "chars": len(req.Body)},
+		})
 		if t.Status == "open" {
 			if err := tickets.AllowTransition(t.Status, "in_progress", tickets.TriggerAdminReply, timeNow()); err == nil {
 				updated, _ := st.TKUpdateTicketStatus(r.Context(), t.ID, "in_progress", nil, nil)
@@ -149,14 +185,22 @@ func hTKAdminNote(d Deps) http.HandlerFunc {
 			writeErr(w, http.StatusBadRequest, "tk_empty_body", "note body cannot be empty")
 			return
 		}
+		if !tkValidateBody(w, d, req.Body, false) {
+			return
+		}
+		adminID := r.Header.Get("X-Silo-User-Id")
 		entry, err := st.TKInsertEntryNoTx(r.Context(), store.TKEntry{
 			TicketID: t.ID, Kind: "internal_note",
-			AuthorID: r.Header.Get("X-Silo-User-Id"), AuthorRole: "admin", Body: req.Body,
+			AuthorID: adminID, AuthorRole: "admin", Body: req.Body,
 		})
 		if err != nil {
 			writeInternal(w, r, d, "tk_note_failed", err)
 			return
 		}
+		tkAudit(r.Context(), d, store.TKAuditEntry{
+			TicketID: t.ID, ActorID: adminID, Action: "note",
+			Detail: map[string]any{"entry_id": entry.ID, "chars": len(req.Body)},
+		})
 		writeJSON(w, http.StatusOK, entry)
 	}
 }
@@ -192,6 +236,10 @@ func hTKAdminStatus(d Deps) http.HandlerFunc {
 		_, _ = st.TKInsertEntryNoTx(r.Context(), store.TKEntry{
 			TicketID: t.ID, Kind: "status_change", AuthorID: adminID, AuthorRole: "admin",
 			Body: "Status changed: " + t.Status + " → " + req.To,
+		})
+		tkAudit(r.Context(), d, store.TKAuditEntry{
+			TicketID: t.ID, ActorID: adminID, Action: "status_change",
+			Detail: map[string]any{"from": t.Status, "to": req.To},
 		})
 		tkEnrichForEvent(r.Context(), d, &updated)
 		tkPublishEvent(d, "ticket_status_changed", updated, map[string]any{
@@ -230,6 +278,13 @@ func hTKAdminAssign(d Deps) http.HandlerFunc {
 			writeInternal(w, r, d, "tk_assign_failed", err)
 			return
 		}
+		tkAudit(r.Context(), d, store.TKAuditEntry{
+			TicketID: t.ID, ActorID: r.Header.Get("X-Silo-User-Id"), Action: "assign",
+			Detail: map[string]any{
+				"from_admin_id": derefStr(t.AssignedAdminID),
+				"to_admin_id":   derefStr(req.AdminID),
+			},
+		})
 		tkEnrichForEvent(r.Context(), d, &updated)
 		tkPublishEvent(d, "ticket_assigned", updated, map[string]any{
 			"from_admin_id": t.AssignedAdminID, "to_admin_id": req.AdminID,

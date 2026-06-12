@@ -14,9 +14,9 @@ import (
 	"github.com/hashicorp/go-hclog"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	pluginv1 "github.com/ContinuumApp/continuum-plugin-sdk/pkg/pluginproto/silo/plugin/v1"
-	publicmanifest "github.com/ContinuumApp/continuum-plugin-sdk/pkg/pluginsdk/manifest"
-	sdkruntime "github.com/ContinuumApp/continuum-plugin-sdk/pkg/pluginsdk/runtime"
+	pluginv1 "github.com/Silo-Server/silo-plugin-sdk/pkg/pluginproto/silo/plugin/v1"
+	publicmanifest "github.com/Silo-Server/silo-plugin-sdk/pkg/pluginsdk/manifest"
+	sdkruntime "github.com/Silo-Server/silo-plugin-sdk/pkg/pluginsdk/runtime"
 
 	"github.com/RXWatcher/silo-plugin-support/internal/httproutes"
 	"github.com/RXWatcher/silo-plugin-support/internal/migrate"
@@ -117,6 +117,11 @@ func main() {
 			TKAutoCloseEnabled:       cfg.TicketsAutoCloseEnabled,
 			TKResolvedCloseAfterDays: cfg.TicketsResolvedCloseAfterDays,
 			TKWaitingCloseAfterDays:  cfg.TicketsWaitingCloseAfterDays,
+			TKMaxOpenPerCustomer:         cfg.TicketsMaxOpenPerCustomer,
+			TKMinBodyChars:               cfg.TicketsMinBodyChars,
+			TKMaxBodyChars:               cfg.TicketsMaxBodyChars,
+			TKMaxAttachmentsPerTicket:    cfg.TicketsMaxAttachmentsPerTicket,
+			TKMaxStorageBytesPerCustomer: cfg.TicketsMaxStorageBytesPerCustomer,
 		}))
 		if old := poolPtr.Swap(pool); old != nil {
 			old.Close()

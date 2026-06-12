@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"sync"
 
-	pluginv1 "github.com/ContinuumApp/continuum-plugin-sdk/pkg/pluginproto/silo/plugin/v1"
-	"github.com/ContinuumApp/continuum-plugin-sdk/pkg/pluginsdk/runtimedefault"
+	pluginv1 "github.com/Silo-Server/silo-plugin-sdk/pkg/pluginproto/silo/plugin/v1"
+	"github.com/Silo-Server/silo-plugin-sdk/pkg/pluginsdk/runtimedefault"
 )
 
 // Config is the union of manifest-supplied and DB-persisted plugin
@@ -29,6 +29,15 @@ type Config struct {
 	TicketsAutoCloseEnabled        bool `json:"tickets_auto_close_enabled"`
 	TicketsResolvedCloseAfterDays  int  `json:"tickets_resolved_close_after_days"`
 	TicketsWaitingCloseAfterDays   int  `json:"tickets_waiting_close_after_days"`
+
+	// Tickets spam / abuse + quota controls. Zero means "use the
+	// in-code default" (see DefaultAppConfig); a negative value means
+	// the limit is disabled where that is meaningful.
+	TicketsMaxOpenPerCustomer      int `json:"tickets_max_open_per_customer"`
+	TicketsMinBodyChars            int `json:"tickets_min_body_chars"`
+	TicketsMaxBodyChars            int `json:"tickets_max_body_chars"`
+	TicketsMaxAttachmentsPerTicket int `json:"tickets_max_attachments_per_ticket"`
+	TicketsMaxStorageBytesPerCustomer int64 `json:"tickets_max_storage_bytes_per_customer"`
 }
 
 // ModuleToggles controls which modules are exposed in the UI. All
@@ -70,6 +79,12 @@ func DefaultAppConfig() Config {
 		TicketsAutoCloseEnabled:       true,
 		TicketsResolvedCloseAfterDays: 7,
 		TicketsWaitingCloseAfterDays:  14,
+
+		TicketsMaxOpenPerCustomer:         10,
+		TicketsMinBodyChars:               10,
+		TicketsMaxBodyChars:               20000,
+		TicketsMaxAttachmentsPerTicket:    20,
+		TicketsMaxStorageBytesPerCustomer: 50 << 20, // 50 MB
 	}
 }
 
@@ -95,6 +110,36 @@ func NormalizeAppConfig(cfg Config) (Config, error) {
 	}
 	if cfg.TicketsWaitingCloseAfterDays < 0 {
 		return Config{}, fmt.Errorf("tickets_waiting_close_after_days must be >= 0")
+	}
+	// Spam / abuse + quota limits: a stored 0 (e.g. a pre-existing
+	// app_config row that predates these keys) is treated as "unset" and
+	// backfilled from the in-code defaults so the protections are always
+	// active. Negative values are rejected.
+	def := DefaultAppConfig()
+	if cfg.TicketsMaxOpenPerCustomer == 0 {
+		cfg.TicketsMaxOpenPerCustomer = def.TicketsMaxOpenPerCustomer
+	}
+	if cfg.TicketsMinBodyChars == 0 {
+		cfg.TicketsMinBodyChars = def.TicketsMinBodyChars
+	}
+	if cfg.TicketsMaxBodyChars == 0 {
+		cfg.TicketsMaxBodyChars = def.TicketsMaxBodyChars
+	}
+	if cfg.TicketsMaxAttachmentsPerTicket == 0 {
+		cfg.TicketsMaxAttachmentsPerTicket = def.TicketsMaxAttachmentsPerTicket
+	}
+	if cfg.TicketsMaxStorageBytesPerCustomer == 0 {
+		cfg.TicketsMaxStorageBytesPerCustomer = def.TicketsMaxStorageBytesPerCustomer
+	}
+	if cfg.TicketsMaxOpenPerCustomer < 0 ||
+		cfg.TicketsMinBodyChars < 0 ||
+		cfg.TicketsMaxBodyChars < 0 ||
+		cfg.TicketsMaxAttachmentsPerTicket < 0 ||
+		cfg.TicketsMaxStorageBytesPerCustomer < 0 {
+		return Config{}, fmt.Errorf("tickets spam/quota limits must be >= 0")
+	}
+	if cfg.TicketsMaxBodyChars < cfg.TicketsMinBodyChars {
+		return Config{}, fmt.Errorf("tickets_max_body_chars must be >= tickets_min_body_chars")
 	}
 	return cfg, nil
 }

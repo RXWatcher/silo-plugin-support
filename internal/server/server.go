@@ -42,6 +42,40 @@ type Deps struct {
 	TKAutoCloseEnabled       bool
 	TKResolvedCloseAfterDays int
 	TKWaitingCloseAfterDays  int
+
+	// Tickets spam / abuse + quota controls. Resolved from config with
+	// in-code defaults applied; see runtime.NormalizeAppConfig. A
+	// non-positive value disables the corresponding limit.
+	TKMaxOpenPerCustomer         int
+	TKMinBodyChars               int
+	TKMaxBodyChars               int
+	TKMaxAttachmentsPerTicket    int
+	TKMaxStorageBytesPerCustomer int64
+}
+
+// tkLimits returns the effective spam/quota limits for this Deps,
+// substituting in-code defaults for any value left at zero (e.g. tests
+// that build Deps directly without going through config normalization).
+func (d Deps) tkLimits() (maxOpen, minBody, maxBody, maxAtt int, maxBytes int64) {
+	maxOpen, minBody, maxBody, maxAtt, maxBytes =
+		d.TKMaxOpenPerCustomer, d.TKMinBodyChars, d.TKMaxBodyChars,
+		d.TKMaxAttachmentsPerTicket, d.TKMaxStorageBytesPerCustomer
+	if maxOpen == 0 {
+		maxOpen = 10
+	}
+	if minBody == 0 {
+		minBody = 10
+	}
+	if maxBody == 0 {
+		maxBody = 20000
+	}
+	if maxAtt == 0 {
+		maxAtt = 20
+	}
+	if maxBytes == 0 {
+		maxBytes = 50 << 20
+	}
+	return
 }
 
 func New(d Deps) http.Handler {

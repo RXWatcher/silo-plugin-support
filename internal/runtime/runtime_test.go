@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	pluginv1 "github.com/ContinuumApp/continuum-plugin-sdk/pkg/pluginproto/silo/plugin/v1"
+	pluginv1 "github.com/Silo-Server/silo-plugin-sdk/pkg/pluginproto/silo/plugin/v1"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
@@ -33,6 +33,36 @@ func TestConfigureDefaultsKBSpeedtestTicketsOnAIOff(t *testing.T) {
 	}
 	if observed.DatabaseURL != "postgres://x" {
 		t.Fatalf("DatabaseURL = %q, want postgres://x", observed.DatabaseURL)
+	}
+}
+
+func TestNormalizeBackfillsSpamLimitsFromZero(t *testing.T) {
+	// A config persisted before the spam/quota keys existed deserializes
+	// with zero values; normalization must backfill them from defaults so
+	// the protections are always active.
+	in := Config{AutoStrategy: "latency", ClientIPStorage: "truncated"}
+	out, err := NormalizeAppConfig(in)
+	if err != nil {
+		t.Fatalf("normalize: %v", err)
+	}
+	def := DefaultAppConfig()
+	if out.TicketsMaxOpenPerCustomer != def.TicketsMaxOpenPerCustomer {
+		t.Errorf("max open = %d, want %d", out.TicketsMaxOpenPerCustomer, def.TicketsMaxOpenPerCustomer)
+	}
+	if out.TicketsMinBodyChars != def.TicketsMinBodyChars {
+		t.Errorf("min body = %d, want %d", out.TicketsMinBodyChars, def.TicketsMinBodyChars)
+	}
+	if out.TicketsMaxStorageBytesPerCustomer != def.TicketsMaxStorageBytesPerCustomer {
+		t.Errorf("max storage = %d, want %d", out.TicketsMaxStorageBytesPerCustomer, def.TicketsMaxStorageBytesPerCustomer)
+	}
+}
+
+func TestNormalizeRejectsNegativeLimitsAndInvertedBody(t *testing.T) {
+	if _, err := NormalizeAppConfig(Config{TicketsMaxOpenPerCustomer: -1}); err == nil {
+		t.Error("negative max open should fail")
+	}
+	if _, err := NormalizeAppConfig(Config{TicketsMinBodyChars: 100, TicketsMaxBodyChars: 50}); err == nil {
+		t.Error("min > max body should fail")
 	}
 }
 

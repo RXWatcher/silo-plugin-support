@@ -74,7 +74,7 @@ func TestTKCustomerCreateAndDetailRoundTrip(t *testing.T) {
 
 	cat, _ := st.TKCreateCategory(ctx, store.TKCategory{Slug: "test", Name: "Test", Active: true})
 
-	body := fmt.Sprintf(`{"categoryId":%d,"subject":"hello","body":"world","customerEmail":"a@b"}`, cat.ID)
+	body := fmt.Sprintf(`{"categoryId":%d,"subject":"hello","body":"world enough body","customerEmail":"a@b.com"}`, cat.ID)
 	req := httptest.NewRequest(http.MethodPost, "/api/customer/tickets", bytes.NewBufferString(body))
 	req.Header.Set("X-Silo-User-Id", "42")
 	rec := httptest.NewRecorder()
@@ -116,7 +116,7 @@ func TestTKAdminLifecycle(t *testing.T) {
 	ctx := context.Background()
 	cat, _ := st.TKCreateCategory(ctx, store.TKCategory{Slug: "tx", Name: "TX", Active: true})
 
-	body := fmt.Sprintf(`{"categoryId":%d,"subject":"lifecycle","body":"start","customerEmail":"c@d"}`, cat.ID)
+	body := fmt.Sprintf(`{"categoryId":%d,"subject":"lifecycle","body":"start of lifecycle","customerEmail":"c@d.com"}`, cat.ID)
 	req := httptest.NewRequest(http.MethodPost, "/api/customer/tickets", bytes.NewBufferString(body))
 	req.Header.Set("X-Silo-User-Id", "100")
 	rec := httptest.NewRecorder()
