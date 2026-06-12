@@ -1,9 +1,11 @@
 github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 h1:L/gRVlceqvL25UVaW/CKtUDjefjrs0SPonmDGUVOYP0=
 github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161/go.mod h1:xomTg63KZ2rFqZQzSB4Vz2SUXa1BpHTVz9L5PTmPC4E=
-github.com/ContinuumApp/continuum-plugin-sdk v0.3.10 h1:GLakoOydVwyi/uwzfWg+xCjpmbIFP3uEmpuZLjkPx6g=
-github.com/ContinuumApp/continuum-plugin-sdk v0.3.10/go.mod h1:sYhMYE2FwVY5/THvEIOwVYXsCVWis5GDSTVT9dXg0H4=
 github.com/Microsoft/go-winio v0.6.2 h1:F2VQgta7ecxGYO8k3ZZz3RS8fVIXVxONVUPlNERoyfY=
 github.com/Microsoft/go-winio v0.6.2/go.mod h1:yd8OoFMLzJbo9gZq8j5qaps8bJ9aShtEA8Ipt1oGCvU=
+github.com/Silo-Server/silo-plugin-sdk v0.5.0 h1:0yJpD0RP1AetGsWVCXoPih2ggLjN8hVp8blS+2RkIWU=
+github.com/Silo-Server/silo-plugin-sdk v0.5.0/go.mod h1:etqmxLTwjxpFH9goAjBDfNDoqHMv2/sqUXu8yx3hNfA=
+github.com/Silo-Server/silo-plugin-sdk v0.6.0 h1:Gi9TdH9kt7b8X4xRXH493/nSYb9n0GO4VCWmlll0hKI=
+github.com/Silo-Server/silo-plugin-sdk v0.6.0/go.mod h1:etqmxLTwjxpFH9goAjBDfNDoqHMv2/sqUXu8yx3hNfA=
 github.com/aymerick/douceur v0.2.0 h1:Mv+mAeH1Q+n9Fr+oyamOlAkUNPWPlA8PPGR0QAaYuPk=
 github.com/aymerick/douceur v0.2.0/go.mod h1:wlT5vV2O3h55X9m7iVYN0TBM0NH/MmbLnd30/FjWUq4=
 github.com/bufbuild/protocompile v0.14.1 h1:iA73zAf/fyljNjQKwYzUHD6AD4R8KMasmwa/FBatYVw=

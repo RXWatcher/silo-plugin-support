@@ -3,7 +3,7 @@ module github.com/RXWatcher/silo-plugin-support
 go 1.26.0
 
 require (
-	github.com/ContinuumApp/continuum-plugin-sdk v0.3.10
+	github.com/Silo-Server/silo-plugin-sdk v0.6.0
 	github.com/go-chi/chi/v5 v5.2.5
 	github.com/golang-migrate/migrate/v4 v4.19.1
 	github.com/hashicorp/go-hclog v1.6.3
